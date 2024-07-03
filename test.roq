@@ -1,0 +1,14 @@
+PRINT "Siema"
+
+LET x = 5
+
+IF x < 10 THEN
+   PRINT "It's larger than 10" 
+ENDIF
+
+WHILE x > 10 DO
+    PRINT x
+    LET x = x + 1
+ENDWHILE
+
+
