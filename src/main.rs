@@ -4,8 +4,6 @@ use primal::lexer;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    // args.iter().for_each(|a| println!("arg: {a}"));
-    
     let file_path = &args[1];
     
     let file_contents = fs::read_to_string(file_path)
@@ -13,5 +11,4 @@ fn main() {
 
     let mut lexer = lexer::Lexer::new(0);
     lexer.tokenize(file_contents);
-
 }
