@@ -5,7 +5,9 @@ enum Lexeme {
     Identifier,
     Operator,
     Keyword,
-    Literal,
+    NumberLiteral,
+    StringLiteral,
+    BoolLiteral,
     // Comment,
     Whitespace,
 }
@@ -147,11 +149,12 @@ impl Lexer {
             "/" => Lexeme::Operator,
             "%" => Lexeme::Operator,
 
-            "true" => Lexeme::Literal,
-            "false" => Lexeme::Literal,
+            "true" => Lexeme::BoolLiteral,
+            "false" => Lexeme::BoolLiteral,
+            x if Self::is_valid_string_literal(x)  => Lexeme::StringLiteral,
+            x if Self::is_valid_number(x) => Lexeme::NumberLiteral,
 
-            x if Self::is_valid_string_literal(x)  => Lexeme::Literal,
-            x if Self::is_valid_number(x) => Lexeme::Literal,
+            x if Self::is_valid_identifier(x) => Lexeme::Identifier,
             x if Self::is_valid_identifier(x) => Lexeme::Identifier,
 
             &_ => {
