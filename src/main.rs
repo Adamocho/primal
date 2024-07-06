@@ -1,4 +1,4 @@
-use std::{env, fs, fmt::write};
+use std::{env, fs};
 use primal::lexer;
 
 fn main() {
@@ -9,6 +9,6 @@ fn main() {
     let file_contents = fs::read_to_string(file_path)
         .expect("Should have been able to read a file");
 
-    let mut lexer = lexer::Lexer::new(0);
+    let mut lexer = lexer::Lexer::new();
     lexer.tokenize(file_contents);
 }

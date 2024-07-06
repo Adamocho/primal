@@ -1,35 +1,12 @@
 use core::panic;
 
-
-/// Flags:
-/// 0b_0 0 0 0 0 0 0 0
-/// id 0 1 2 3 4 5 6 7
-///    ^ ^ ^ ^
-///    | | | IS_COMMENT (Discard the rest of the line) 
-///    | | IS_PART_STRING (continue till the other double quote '"' is found)
-///    | IS_ESCAPED (quote)
-///    IS_LEXEME
-
-
-type Flag = u8; // 0000_0000 - eight flags to choose from
-
-enum Flags {
-    IsLexeme = 0,
-    IsEscaped = 1,
-    IsPartString = 2,
-    IsComment = 3,
-}
-
-
-
-
 #[derive(Debug)]
 enum Lexeme {
     Identifier,
     Operator,
     Keyword,
     Literal,
-    Comment,
+    // Comment,
     Whitespace,
 }
 
@@ -42,7 +19,6 @@ enum Token {
 // evaluator -> IDENTIFIER x    LITERAL_STRING "hello"
 
 pub struct Lexer {
-    flags: Flag,
     output: String,
     line_counter: u32,
     character_counter: u32,
@@ -51,9 +27,8 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new(flags: Flag) -> Self {
+    pub fn new() -> Self {
         Lexer {
-            flags,
             output: String::new(),
             character_counter: 0,
             line_counter: 0,
@@ -71,77 +46,52 @@ impl Lexer {
 
         let mut lexemes: Vec<&str> = vec![];
         let mut lexeme_start = 0;
-        let mut counter = 0; 
+        let mut is_lexeme = false;
+        let mut is_comment = false;
+        let mut is_string = false;
 
         line.chars().enumerate().for_each(|(index, c)| {
 
-            dbg!(self.flags, index, c);
-
             // ignore the rest of the line
-            if self.get_flag(Flags::IsComment as u8) { return; }
+            if is_comment { return; }
 
             match c {
                 ' ' | '\n' => {
-                    if self.get_flag(Flags::IsComment as u8) {
-                        counter += 1;
-
+                    if is_lexeme && !is_string {
                         if let Some(unit) = line.get(lexeme_start..=index - 1) { 
                             lexemes.push(unit);
                         }
-                        self.flip_flag(Flags::IsLexeme as u8);
+                        is_lexeme = false;
                     }
                 },
                 '#' => {
-                    self.flip_flag(Flags::IsComment as u8);
-                    return;
+                    is_comment = true;
                 },
                 _ => {
-                    if !self.get_flag(Flags::IsLexeme as u8) {
-                        self.flip_flag(Flags::IsLexeme as u8);
+                    if !is_lexeme {
+                        is_lexeme = true;
                         lexeme_start = index;
+                    }
+
+                    if c == '"' {
+                        is_string = !is_string;
+                    }
+
+                    if is_lexeme && index == line.len() - 1{
+                        if let Some(unit) = line.get(lexeme_start..=index) { 
+                            lexemes.push(unit);
+                        }
+                        is_lexeme = false;
                     }
                 }
             }
         });
 
-        // reset used flags
-        self.flags &= 0b0000_1111;
-
-        dbg!(counter);
-        dbg!(&lexemes);
-
-        panic!("Panic");
-
-        vec![]
-
-        // lexemes
-        //     .iter()
-        //     .map(|lexeme| {
-        //         self.identify_lexeme(lexeme)
-        //     }).collect()
-    }
-
-    fn get_flag(&self, flag_number: u8) -> bool {
-        ((self.flags >> (7 - flag_number)) & 0b1) == 1
-    }
-
-    fn flip_flag(&mut self, flag_number: u8) {
-        self.flags ^= 1 << (7 - flag_number);
-    }
-
-    fn set_flag(&mut self, flag_number: u8, value: bool) {
-        let flag = self.get_flag(flag_number);
-
-        if flag == value { return; }
-        self.flip_flag(flag_number);
-    }
-
-    fn process_character(&mut self, c: char) -> Lexeme {
-        panic!("Character not recognized: {c}")
-    }
-
-    // look at the next character
-    fn lookup_ahead(&mut self) {
+        lexemes
+            .iter()
+            .map(|lexeme| {
+                self.identify_token(lexeme)
+            }).collect()
     }
 
     fn is_valid_identifier(lexeme: &str) -> bool {
@@ -150,7 +100,7 @@ impl Lexer {
                 // pretty much a hand-made regex for identifiers: [a-zA-Z_][a-zA-Z_0-9]*
                 'a'..='z' | 'A'..='Z' | '_' => (),
                 '0'..='9' if index != 0 => (),
-                _ => {dbg!(index, c); return false;}
+                _ => { return false }
             }
         }
         true
@@ -163,23 +113,17 @@ impl Lexer {
         }
     }
 
-    fn is_string_literal(lexeme: &str) -> bool {
-        return true;
-        // todo!("Not yet implemented");
+    /// Rust automatically sanitises quotes -> \"text\"
+    fn is_valid_string_literal(lexeme: &str) -> bool {
+        if Some('"') == lexeme.chars().nth(0) && Some('"') == lexeme.chars().nth_back(0) {
+            return true;
+        }
+        false
     }
 
-    fn quote_found(&mut self) {
-        // flip the second bit
-        self.flags ^= 10;
-    }
-
-    fn identify_lexeme(&mut self, lexeme: &str) -> Lexeme {
+    fn identify_token(&mut self, lexeme: &str) -> Lexeme {
         match lexeme {
-            "\"" => {
-                self.quote_found();
-                Lexeme::Literal
-            },
-
+            // just to be sure it doesn't panic
             "" => Lexeme::Whitespace,
             "\n" => Lexeme::Whitespace,
             " " => Lexeme::Whitespace,
@@ -202,22 +146,18 @@ impl Lexer {
             "*" => Lexeme::Operator,
             "/" => Lexeme::Operator,
             "%" => Lexeme::Operator,
-            "#" => {
-                self.flags |= 1;
-                Lexeme::Comment
-            },
 
             "true" => Lexeme::Literal,
             "false" => Lexeme::Literal,
-            x if Self::is_string_literal(x)  => Lexeme::Literal,
+
+            x if Self::is_valid_string_literal(x)  => Lexeme::Literal,
             x if Self::is_valid_number(x) => Lexeme::Literal,
-            x if Self::is_valid_identifier(x) => Lexeme::Literal,
+            x if Self::is_valid_identifier(x) => Lexeme::Identifier,
 
             &_ => {
-                panic!("Pattern not recognized: {lexeme}")
+                panic!("Token not recognized: {lexeme}")
             }
         }
     }
 }
-
 
