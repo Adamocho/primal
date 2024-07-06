@@ -1,50 +1,56 @@
 use core::panic;
 
-#[derive(Debug)]
-enum Lexeme {
-    Identifier,
-    Operator,
-    Keyword,
-    NumberLiteral,
-    StringLiteral,
-    BoolLiteral,
-    // Comment,
-    Whitespace,
-}
-
-// generic type needed
-enum Token {
-}
 
 // 2 phases
-// scanner -> [(identifier, x), (literal, "hello")]
+// DONE // scanner -> [(identifier, x), (literal, "hello")]
 // evaluator -> IDENTIFIER x    LITERAL_STRING "hello"
 
-pub struct Lexer {
-    output: String,
-    line_counter: u32,
-    character_counter: u32,
-    scann: Vec<(Lexeme, String)>,
-    evaluation: Vec<Token>
+#[derive(Debug)]
+enum Token {
+    Print,
+    Let,
+    If,
+    Then,
+    While,
+    Do,
+    End,
+    Endif,
+    Endwhile,
+
+    Equals,
+    Assign,
+    MoreThanEquals,
+    LessThanEquals,
+    MoreThan,
+    LessThan,
+    Plus,
+    Minus,
+    Times,
+    Divide,
+    Modulo,
+
+    Bool,
+    String,
+    Number,
+
+    Identifier,
+    Unknown,
 }
 
+pub struct Lexer {}
+
 impl Lexer {
-    pub fn new() -> Self {
-        Lexer {
-            output: String::new(),
-            character_counter: 0,
-            line_counter: 0,
-            evaluation: Vec::new(),
-            scann: Vec::new(),
-        }
-    }
-
     // main lexer function
-    pub fn tokenize(&mut self, contents: String) {
-        let all_tokens: Vec<Vec<Lexeme>> = contents.lines().map(|line| self.tokenize_line(line)).collect();
+    pub fn tokenize(contents: String) {
+        let all_tokens: Vec<Vec<Token>> = contents
+            .lines()
+            .map(|line| Self::tokenize_line(line))
+            .filter(|tokens| !tokens.is_empty()) // Care only about non-empty lines.
+            .collect();
+        dbg!(all_tokens);
     }
 
-    fn tokenize_line(&mut self, line: &str) -> Vec<Lexeme> {
+    fn tokenize_line(line: &str) -> Vec<Token> {
 
         let mut lexemes: Vec<&str> = vec![];
         let mut lexeme_start = 0;
@@ -92,8 +98,9 @@ impl Lexer {
         lexemes
             .iter()
             .map(|lexeme| {
-                self.identify_token(lexeme)
-            }).collect()
+                Self::identify_token(lexeme)
+            })
+            .collect()
     }
 
     fn is_valid_identifier(lexeme: &str) -> bool {
@@ -123,42 +130,44 @@ impl Lexer {
         false
     }
 
-    fn identify_token(&mut self, lexeme: &str) -> Lexeme {
+    fn identify_token(lexeme: &str) -> Token {
         match lexeme {
-            // just to be sure it doesn't panic
-            "" => Lexeme::Whitespace,
-            "\n" => Lexeme::Whitespace,
-            " " => Lexeme::Whitespace,
+                // just to be sure it doesn't panic for now
+            // "" => Token::Unknown,
+            // "\n" => Token::Unknown,
+            // " " => Token::Unknown,
 
-            "PRINT" => Lexeme::Keyword,
-            "LET" => Lexeme::Keyword,
-            "IF" => Lexeme::Keyword,
-            "THEN" => Lexeme::Keyword,
-            "WHILE" => Lexeme::Keyword,
-            "DO" => Lexeme::Keyword,
-            "END" => Lexeme::Keyword,
-            "ENDIF" => Lexeme::Keyword,
-            "ENDWHILE" => Lexeme::Keyword,
+            "PRINT" => Token::Print,
+            "LET" => Token::Let,
+            "IF" => Token::If,
+            "THEN" => Token::Then,
+            "WHILE" => Token::While,
+            "DO" => Token::Do,
+            "END" => Token::End,
+            "ENDIF" => Token::Endif,
+            "ENDWHILE" => Token::Endwhile,
 
-            "=" => Lexeme::Operator,
-            ">" => Lexeme::Operator,
-            "<" => Lexeme::Operator,
-            "+" => Lexeme::Operator,
-            "-" => Lexeme::Operator,
-            "*" => Lexeme::Operator,
-            "/" => Lexeme::Operator,
-            "%" => Lexeme::Operator,
+            "==" => Token::Equals,
+            "=" => Token::Assign,
+            "=>" => Token::MoreThanEquals,
+            ">" => Token::MoreThan,
+            "<=" => Token::LessThanEquals,
+            "<" => Token::LessThan,
+            "+" => Token::Plus,
+            "-" => Token::Minus,
+            "*" => Token::Times,
+            "/" => Token::Divide,
+            "%" => Token::Modulo,
 
-            "true" => Lexeme::BoolLiteral,
-            "false" => Lexeme::BoolLiteral,
-            x if Self::is_valid_string_literal(x)  => Lexeme::StringLiteral,
-            x if Self::is_valid_number(x) => Lexeme::NumberLiteral,
+            "true" => Token::Bool,
+            "false" => Token::Bool,
+            x if Self::is_valid_string_literal(x)  => Token::String,
+            x if Self::is_valid_number(x) => Token::Number,
 
-            x if Self::is_valid_identifier(x) => Lexeme::Identifier,
-            x if Self::is_valid_identifier(x) => Lexeme::Identifier,
+            x if Self::is_valid_identifier(x) => Token::Identifier,
 
             &_ => {
-                panic!("Token not recognized: {lexeme}")
+                panic!("Token not recognized: {:?} - {:?}", lexeme, Token::Unknown);
             }
         }
     }

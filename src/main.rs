@@ -9,6 +9,5 @@ fn main() {
     let file_contents = fs::read_to_string(file_path)
         .expect("Should have been able to read a file");
 
-    let mut lexer = lexer::Lexer::new();
-    lexer.tokenize(file_contents);
+    let _tokens = lexer::Lexer::tokenize(file_contents);
 }
