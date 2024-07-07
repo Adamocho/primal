@@ -6,7 +6,7 @@ use core::panic;
 // evaluator -> IDENTIFIER x    LITERAL_STRING "hello"
 
 #[derive(Debug)]
-enum Token {
+pub enum Token {
     Print,
     Let,
     If,
@@ -29,11 +29,13 @@ enum Token {
     Divide,
     Modulo,
 
-    Bool,
-    String,
-    Number,
+    Bool(bool),
+    String(String),
+    Number(i32),
 
-    Identifier,
+    Identifier(String),
+
+    // Is this necessary?
     Unknown,
 }
 
@@ -41,13 +43,12 @@ pub struct Lexer {}
 
 impl Lexer {
     // main lexer function
-    pub fn tokenize(contents: String) {
-        let all_tokens: Vec<Vec<Token>> = contents
+    pub fn tokenize(contents: String) -> Vec<Vec<Token>> {
+        contents
             .lines()
             .map(|line| Self::tokenize_line(line))
             .filter(|tokens| !tokens.is_empty()) // Care only about non-empty lines.
-            .collect();
-        dbg!(all_tokens);
+            .collect()
     }
 
     fn tokenize_line(line: &str) -> Vec<Token> {
@@ -159,16 +160,16 @@ impl Lexer {
             "/" => Token::Divide,
             "%" => Token::Modulo,
 
-            "true" => Token::Bool,
-            "false" => Token::Bool,
-            x if Self::is_valid_string_literal(x)  => Token::String,
-            x if Self::is_valid_number(x) => Token::Number,
+            "true" => Token::Bool(true),
+            "false" => Token::Bool(false),
+            x if Self::is_valid_string_literal(x)  => Token::String(x.to_string()),
+            x if Self::is_valid_number(x) => { Token::Number(x.parse().unwrap()) },
 
-            x if Self::is_valid_identifier(x) => Token::Identifier,
+            x if Self::is_valid_identifier(x) => Token::Identifier(x.to_string()),
 
             &_ => {
                 panic!("Token not recognized: {:?} - {:?}", lexeme, Token::Unknown);
-            }
+            },
         }
     }
 }
