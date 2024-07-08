@@ -41,12 +41,11 @@ pub struct Lexer {}
 
 impl Lexer {
     // main lexer function
-    pub fn tokenize(contents: String) -> Vec<Token> {
+    pub fn tokenize(contents: String) -> Vec<Vec<Token>> {
         contents
             .lines()
             .map(|line| Self::tokenize_line(line))
             .filter(|tokens| !tokens.is_empty()) // Care only about non-empty lines.
-            .flatten() // possible thanks to Token::Newline
             .collect()
     }
 
@@ -94,8 +93,6 @@ impl Lexer {
                 }
             }
         });
-
-        lexemes.push("\n"); // add NEWLINE at the end
 
         lexemes
             .iter()

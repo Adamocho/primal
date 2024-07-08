@@ -34,6 +34,10 @@ Only for evoking the (`primal` or similar) command in the terminal.
 
 It will just be locating a given file and giving it the the whole compiling machine.
 
+## Grammar-tree
+
+See [grammar-tree.txt](./grammar-tree.txt)
+
 ## Keywords (planned or already implemented)
 
 | Keyword | Desc | Showcase | Options |

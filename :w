@@ -41,12 +41,11 @@ pub struct Lexer {}
 
 impl Lexer {
     // main lexer function
-    pub fn tokenize(contents: String) -> Vec<Token> {
+    pub fn tokenize(contents: String) -> Vec<Vec<Token>> {
         contents
             .lines()
             .map(|line| Self::tokenize_line(line))
             .filter(|tokens| !tokens.is_empty()) // Care only about non-empty lines.
-            .flatten() // possible thanks to Token::Newline
             .collect()
     }
 
@@ -95,14 +94,14 @@ impl Lexer {
             }
         });
 
-        lexemes.push("\n"); // add NEWLINE at the end
-
         lexemes
+            .push("\n")
             .iter()
             .map(|lexeme| {
                 Self::identify_token(lexeme)
             })
             .collect()
+
     }
 
     fn is_valid_identifier(lexeme: &str) -> bool {
@@ -134,8 +133,6 @@ impl Lexer {
 
     fn identify_token(lexeme: &str) -> Token {
         match lexeme {
-            "\n" => Token::Newline,
-
             "PRINT" => Token::Print,
             "LET" => Token::Let,
             "IF" => Token::If,
