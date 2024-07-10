@@ -3,6 +3,7 @@ use core::panic;
 #[derive(Debug)]
 pub enum Token {
     Print,
+    Input,
     Let,
     If,
     Then,
@@ -137,6 +138,7 @@ impl Lexer {
             "\n" => Token::Newline,
 
             "PRINT" => Token::Print,
+            "INPUT" => Token::Input,
             "LET" => Token::Let,
             "IF" => Token::If,
             "THEN" => Token::Then,
