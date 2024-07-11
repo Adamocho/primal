@@ -1,6 +1,6 @@
 use core::panic;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Print,
     Input,

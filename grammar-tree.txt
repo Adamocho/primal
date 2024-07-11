@@ -1,10 +1,10 @@
 programm ::= {statement}
 statement ::=  
-    | "PRINT" (expression | complex) nl
+    | "PRINT" string nl
     | "LET" identifier "=" expression nl
     | "IF" comparison "THEN" nl {statement} "ENDIF" nl
     | "WHILE" comparison nl "DO" {statement} nl "ENDWHILE" nl
-    | "INPUT" (identifier | (identifier string))
+    | "INPUT" string identifier
     | "GOTO" identifier nl
 comparisons ::= comparison {("AND" | "OR") comparison}
 comparison ::= (expression ("==" | "!=" | "<=" | ">=" | ">" | "<") expression) | ("true" | "false")

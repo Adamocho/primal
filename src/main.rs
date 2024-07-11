@@ -1,5 +1,5 @@
 use std::{env, fs};
-use primal::lexer;
+use primal::{lexer, parser};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -10,5 +10,8 @@ fn main() {
         .expect("Should have been able to read a file");
 
     let tokens = lexer::Lexer::tokenize(file_contents);
-    dbg!(tokens);
+    dbg!(&tokens);
+    let mut parser = parser::Parser::new(tokens);
+    let parsed = parser.parse();
+    dbg!(&parsed);
 }
