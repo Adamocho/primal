@@ -14,9 +14,10 @@ pub enum Token {
     Endwhile,
     Goto,
 
+    Assign,
+
     Equals,
     NotEquals,
-    Assign,
     MoreThanEquals,
     LessThanEquals,
     MoreThan,
@@ -30,13 +31,20 @@ pub enum Token {
     Divide,
     Modulo,
 
-    Bool(bool),
-    String(String),
-    Number(i32),
-    Identifier(String),
+    // u8 is and ID for simpler matching
+    Bool(bool, u8),
+    String(String, u8),
+    Number(i32, u8),
+    Identifier(String, u8),
 
     Newline,
 }
+
+pub const BOOL_ID: u8 = 1;
+pub const STRING_ID: u8 = 2;
+pub const NUMBER_ID: u8 = 4;
+pub const IDENTIFIER_ID: u8 = 8;
+
 
 pub struct Lexer {}
 
@@ -166,13 +174,13 @@ impl Lexer {
             "/" => Token::Divide,
             "%" => Token::Modulo,
 
-            "true" => Token::Bool(true),
-            "false" => Token::Bool(false),
+            "true" => Token::Bool(true, BOOL_ID),
+            "false" => Token::Bool(false, BOOL_ID),
 
-            x if Self::is_valid_string_literal(x)  => Token::String(x.to_string()),
-            x if Self::is_valid_number(x) => { Token::Number(x.parse().unwrap()) },
+            x if Self::is_valid_string_literal(x)  => Token::String(x.to_string(), STRING_ID),
+            x if Self::is_valid_number(x) => { Token::Number(x.parse().unwrap(), NUMBER_ID) },
 
-            x if Self::is_valid_identifier(x) => Token::Identifier(x.to_string()),
+            x if Self::is_valid_identifier(x) => Token::Identifier(x.to_string(), IDENTIFIER_ID),
 
             &_ => {
                 panic!("Token not recognized: {:?}", lexeme);
