@@ -7,11 +7,13 @@ statement ::=
     | "INPUT" string identifier
     | "GOTO" identifier nl
 comparisons ::= comparison {("AND" | "OR") comparison}
-comparison ::= (expression ("==" | "!=" | "<=" | ">=" | ">" | "<") expression) | ("true" | "false")
+comparison ::= (expression equals expression) | ("true" | "false")
 expression ::= term {("+" | "-") term}
 term ::= unary {("*" | "/" | "%") unary}
 unary ::= ["+" | "-"] primary
 primary ::= identifier | number
-complex ::= identifier | string
+// for future?
+// complex ::= identifier | string
+equals ::= ("==" | "!=" | "<=" | ">=" | ">" | "<")
 nl ::= '\n'+
 
