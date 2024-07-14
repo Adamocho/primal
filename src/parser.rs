@@ -73,18 +73,14 @@ impl Parser {
 
                 self.comparisons();
                 self.match_token(Token::Then);
-                self.newline();
 
-                // ZERO OR MORE???
+                self.match_token(Token::Newline);
                 self.recognize_statement();
-
-                // ?? 
-                self.newline();
 
                 self.match_token(Token::Endif);
                 self.newline();
             },
-            // "WHILE" comparison nl "DO" {statement} nl "ENDWHILE" nl
+            // "WHILE" comparison nl "DO" nl {statement} nl "ENDWHILE" nl
             Some(Token::While) => {
                 println!("While-statement");
                 self.next_token();
@@ -93,11 +89,8 @@ impl Parser {
                 self.newline();
                 self.match_token(Token::Do);
 
-                // ZERO OR MORE???
+                self.match_token(Token::Newline);
                 self.recognize_statement();
-
-                // ?? 
-                self.newline();
 
                 self.match_token(Token::Endwhile);
                 self.newline();
@@ -119,11 +112,15 @@ impl Parser {
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
                 self.newline();
             },
+            // nl ::= '\n'+
             Some(Token::Newline) => {
                 println!("Newline");
+                self.next_token();
 
                 // clear newlines till next different token
-                self.newline();
+                if self.current == Some(Token::Newline) {
+                    self.newline();
+                }
             },
             _ => {
                 panic!("Syntax error: Token not recognized: {:#?}", self.current);
