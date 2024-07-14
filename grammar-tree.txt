@@ -12,7 +12,7 @@ expression ::= term {("+" | "-") term}
 term ::= unary {("*" | "/" | "%") unary}
 unary ::= ["+" | "-"] primary
 primary ::= identifier | number
-// for future?
+// implement later
 // complex ::= identifier | string
 equals ::= ("==" | "!=" | "<=" | ">=" | ">" | "<")
 nl ::= '\n'+

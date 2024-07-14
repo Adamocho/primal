@@ -1,13 +1,15 @@
-PRINT "Siema"
+PRINT "At last..."
 
 LET x = 5
 
 IF x < 10 THEN
    PRINT "It's larger than 10" 
+   LET y = 102130
 ENDIF
 
-WHILE x > 10 DO
-    PRINT x
+WHILE x > 10
+DO
+    PRINT "Hey, look at me!"
     LET x = x + 1
 ENDWHILE
 

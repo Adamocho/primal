@@ -36,11 +36,9 @@ impl Parser {
         self.next_token();
         self.next_token();
 
-        // while self.next.is_some() && self.counter <= self.tokens.len() {
-        //     self.recognize_statement();
-        // }
-
-        self.recognize_statement();
+        while self.next.is_some() && self.counter <= self.tokens.len() {
+            self.recognize_statement();
+        }
 
         println!("Parsing done!");
     }
@@ -54,6 +52,7 @@ impl Parser {
                 self.next_token();
 
                 self.match_token(Token::String(PLACEHOLDER, STRING_ID));
+                // self.complex();
 
                 self.newline();
             },
@@ -79,7 +78,9 @@ impl Parser {
                 self.match_token(Token::Then);
 
                 self.match_token(Token::Newline);
-                self.recognize_statement();
+                while self.current != Some(Token::Endif) {
+                    self.recognize_statement();
+                }
 
                 self.match_token(Token::Endif);
                 self.newline();
@@ -94,7 +95,9 @@ impl Parser {
                 self.match_token(Token::Do);
 
                 self.match_token(Token::Newline);
-                self.recognize_statement();
+                while self.current != Some(Token::Endwhile) {
+                    self.recognize_statement();
+                }
 
                 self.match_token(Token::Endwhile);
                 self.newline();
@@ -269,8 +272,6 @@ impl Parser {
                 ));
             }
         }
-        
-        self.next_token();
     }
 
     // nl ::= '\n'+
