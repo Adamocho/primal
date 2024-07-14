@@ -1,14 +1,18 @@
 use core::panic;
 
 use crate::lexer::Token;
-use crate::lexer::{BOOL_ID, STRING_ID, NUMBER_ID, IDENTIFIER_ID};
+use crate::lexer::{
+    // BOOL_ID, 
+    STRING_ID, 
+    NUMBER_ID, 
+    IDENTIFIER_ID};
 
 #[derive(Debug)]
 pub struct Parser {
     tokens: Vec<Token>,
-    start: usize,
+    // start: usize,
     counter: usize,
-    program: Vec<Token>,
+    // program: Vec<Token>,
     current: Option<Token>,
     next: Option<Token>,
 }
@@ -19,9 +23,9 @@ impl Parser {
     pub fn new(tokens: Vec<Token>) -> Parser {
         Parser {
             tokens,
-            start: 0,
+            // start: 0,
             counter: 0,
-            program: vec![],
+            // program: vec![],
             current: None,
             next: None,
         }
