@@ -53,7 +53,7 @@ impl Lexer {
     pub fn tokenize(contents: String) -> Vec<Token> {
         contents
             .lines()
-            .map(|line| Self::tokenize_line(line))
+            .map(Self::tokenize_line)
             .filter(|tokens| !tokens.is_empty()) // Care only about non-empty lines.
             .flatten() // possible thanks to Token::Newline
             .collect()
@@ -127,10 +127,7 @@ impl Lexer {
     }
 
     fn is_valid_number(lexeme: &str) -> bool {
-        match lexeme.parse::<i32>() {
-            Ok(_) => true,
-            _ => false
-        }
+        lexeme.parse::<i32>().is_ok()
     }
 
     /// Rust automatically sanitises quotes -> \"text\"

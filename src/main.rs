@@ -12,6 +12,6 @@ fn main() {
     let tokens = lexer::Lexer::tokenize(file_contents);
     dbg!(&tokens);
     let mut parser = parser::Parser::new(tokens);
-    let parsed = parser.parse();
-    dbg!(&parsed);
+    parser.parse();
+    dbg!("Parsing done!");
 }

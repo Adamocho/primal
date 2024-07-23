@@ -151,13 +151,10 @@ impl Parser {
     // comparison ::= (expression equals expression) | ("true" | "false")
     fn comparison(&mut self) {
         println!("Checking a comparison");
-
-        match self.current {
-            Some(Token::Bool(_, _)) => {
-                self.next_token();
-                return;
-            }
-            _ => {}
+        
+        if let Some(Token::Bool(_, _)) = self.current {
+            self.next_token();
+            return;
         }
 
         self.expression();
@@ -314,7 +311,7 @@ impl Parser {
     }
 
     fn next_token(&mut self) {
-        self.current = self.next.clone();
+        self.current.clone_from(&self.next);
         self.next = self.tokens.get(self.counter).cloned();
         self.counter += 1;
     }
