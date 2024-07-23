@@ -51,12 +51,12 @@ impl Parser {
                 println!("Print-statement");
                 self.next_token();
 
-                self.match_token(Token::String(PLACEHOLDER, STRING_ID));
-                // self.complex();
+                // self.match_token(Token::String(PLACEHOLDER, STRING_ID));
+                self.complex();
 
                 self.newline();
             },
-            // "LET" identifier "=" expression nl
+            // "LET" identifier "=" value nl
             Some(Token::Let) => {
                 println!("Let-statement");
                 self.next_token();
@@ -65,11 +65,11 @@ impl Parser {
 
                 self.match_token(Token::Assign);
 
-                self.expression();
+                self.value();
 
                 self.newline();
             },
-            // "IF" comparison "THEN" nl {statement} nl "ENDIF" nl
+            // "IF" comparisons "THEN" nl {statement} nl "ENDIF" nl
             Some(Token::If) => {
                 println!("If-statement");
                 self.next_token();
@@ -85,7 +85,7 @@ impl Parser {
                 self.match_token(Token::Endif);
                 self.newline();
             },
-            // "WHILE" comparison nl "DO" nl {statement} nl "ENDWHILE" nl
+            // "WHILE" comparisons nl "DO" nl {statement} nl "ENDWHILE" nl
             Some(Token::While) => {
                 println!("While-statement");
                 self.next_token();
@@ -162,6 +162,11 @@ impl Parser {
         self.equals();
 
         self.expression();
+    }
+
+    // value ::= ("true" | "false" | expression | comparisons | complex)
+    fn value(&mut self) {
+        todo!("IMplement this!!!");
     }
 
     // expression ::= term {("+" | "-") term}

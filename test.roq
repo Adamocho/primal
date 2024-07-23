@@ -1,16 +1,33 @@
-PRINT "At last..."
+PRINT "At last..." # A sample comment
 
-LET x = 5
+# Sample INPUT
+INPUT "Gimmie something" user_input
 
-IF x < 10 THEN
-   PRINT "It's larger than 10" 
-   LET y = 102130
-ENDIF
+# A used variable
+LET x = 1
+LET is_number = true
 
-WHILE x > 10
+# An unused variable
+    #LET y = 1
+
+# Fizzbuzz
+WHILE x <= 15
 DO
-    PRINT "Hey, look at me!"
-    LET x = x + 1
-ENDWHILE
+    IF x % 3 == 0 THEN
+        PRINT "Fizz"
+        LET is_number = false
+    ENDIF
 
+    IF x % 5 == 0 THEN
+        PRINT "Buzz"
+        LET is_number = false
+    ENDIF
+
+    IF is_number == true THEN
+        PRINT x
+    ENDIF
+
+    LET x = x + 1
+    LET is_number = true
+ENDWHILE
 
