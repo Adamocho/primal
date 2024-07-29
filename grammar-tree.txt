@@ -1,19 +1,20 @@
 programm ::= {statement}
 statement ::=  
-    | "PRINT" string nl
+    | "PRINT" value nl
     | "LET" identifier "=" value nl
     | "IF" comparisons "THEN" nl {statement} "ENDIF" nl
     | "WHILE" comparisons nl "DO" {statement} nl "ENDWHILE" nl
     | "INPUT" string identifier
     | "GOTO" identifier nl
 comparisons ::= comparison {("AND" | "OR") comparison}
-comparison ::= (expression equals expression) | ("true" | "false")
-value ::= ("true" | "false" | expression | comparisons | complex)
+comparison ::= (expression equals expression) | boolean
+value ::= identifier | string | number | bool
 expression ::= term {("+" | "-") term}
 term ::= unary {("*" | "/" | "%") unary}
 unary ::= ["+" | "-"] primary
 primary ::= identifier | number
 complex ::= identifier | string
+boolean ::= identifier | bool
 equals ::= ("==" | "!=" | "<=" | ">=" | ">" | "<")
 nl ::= '\n'+
 
