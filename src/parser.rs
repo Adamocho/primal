@@ -2,7 +2,7 @@ use core::panic;
 
 use crate::lexer::Token;
 use crate::lexer::{
-    // BOOL_ID, 
+    BOOL_ID, 
     STRING_ID, 
     NUMBER_ID, 
     IDENTIFIER_ID};
@@ -46,13 +46,12 @@ impl Parser {
     // recognize grammar-tree statement
     fn recognize_statement(&mut self) {
         match self.current {
-            // "PRINT" string nl
+            // "PRINT" value nl
             Some(Token::Print) => {
                 println!("Print-statement");
                 self.next_token();
 
-                // self.match_token(Token::String(PLACEHOLDER, STRING_ID));
-                self.complex();
+                self.value();
 
                 self.newline();
             },
@@ -152,7 +151,7 @@ impl Parser {
     fn comparison(&mut self) {
         println!("Checking a comparison");
         
-        if let Some(Token::Bool(_, _)) = self.current {
+        if let Some(Token::Bool(_, _)) | Some(Token::Identifier(_, _)) = self.current {
             self.next_token();
             return;
         }
@@ -164,9 +163,36 @@ impl Parser {
         self.expression();
     }
 
-    // value ::= ("true" | "false" | expression | comparisons | complex)
+    // value ::= identifier | string | number | bool
     fn value(&mut self) {
-        todo!("IMplement this!!!");
+        println!("Value");
+
+        match self.current {
+            Some(Token::Identifier(_, id))
+            | Some(Token::String(_, id))
+            | Some(Token::Number(_, id))
+            | Some(Token::Bool(_, id)) => {
+                if id == IDENTIFIER_ID
+                || id == STRING_ID
+                || id == NUMBER_ID
+                || id == BOOL_ID { 
+                    self.next_token(); return;
+                }
+            },
+            _ => {}
+        }
+
+        Self::abort(
+            format!(
+                "Expected one of: {:#?}, {:#?}, {:#?}, or {:#?}. Got: {:#?}",
+                Token::Identifier(PLACEHOLDER, IDENTIFIER_ID),
+                Token::String(PLACEHOLDER, STRING_ID),
+                Token::Number(0, NUMBER_ID),
+                Token::Bool(false, BOOL_ID),
+                self.current
+            )
+        );
+        
     }
 
     // expression ::= term {("+" | "-") term}
@@ -229,28 +255,6 @@ impl Parser {
             )
         );
     }
-
-    // complex ::= identifier | string
-    fn complex(&mut self) {
-        println!("Complex");
-
-        match self.current {
-            Some(Token::Identifier(_, id)) | Some(Token::String(_, id)) => {
-                if id == IDENTIFIER_ID || id == STRING_ID { self.next_token(); return; }
-            },
-            _ => {}
-        }
-
-        Self::abort(
-            format!(
-                "expected {:#?} OR {:#?}, got {:#?}",
-                Token::Identifier(PLACEHOLDER, IDENTIFIER_ID),
-                Token::String(PLACEHOLDER, STRING_ID),
-                self.current
-            )
-        );
-    }
-
 
     // equals ::= ("==" | "!=" | "<=" | ">=" | ">" | "<")
     fn equals(&mut self) {
