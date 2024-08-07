@@ -186,3 +186,99 @@ impl Lexer {
     }
 }
 
+
+
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use super::*;
+
+    #[test]
+    fn identify_string() {
+        let x = "\"Hello\"with quotes\'in between\"";
+        let result = self::Lexer::identify_token(x);
+
+        assert_eq!(result, Token::String(x.to_string(), STRING_ID), "Couldn't identify a string");
+    }
+
+    #[test]
+    #[should_panic]
+    fn not_a_string() {
+        let x = "\"I dont have an end quote..";
+
+        // should panic here
+        let _ = self::Lexer::identify_token(x);
+    }
+
+    #[test]
+    fn identify_number() {
+        let x: &str = "000345";
+
+        let result = self::Lexer::identify_token(x);
+
+        assert_eq!(result, Token::Number(x.parse().unwrap(), NUMBER_ID), "Couldn't identify a normal number");
+    }
+
+    #[test]
+    #[should_panic]
+    fn identify_a_float() {
+        let x = "-10923,10293";
+        let y = "999,420";
+
+        let result1 = self::Lexer::identify_token(x);
+        let result2 = self::Lexer::identify_token(y);
+
+        assert_eq!(result1, Token::Number(x.parse().unwrap(), NUMBER_ID), "Couldn't identify a signed float");
+        assert_eq!(result2, Token::Number(y.parse().unwrap(), NUMBER_ID), "Couldn't identify a float");
+    }
+
+    #[test]
+    fn identify_identifier() {
+        let x = "abcdefghijkmnlopqrstuvwxyzABCDEFGHIJKMNLOPQRSTUVWXYZ1234567890_";
+        let result = self::Lexer::identify_token(x);
+
+        assert_eq!(result, Token::Identifier(x.to_string(), IDENTIFIER_ID), "Identifier was not found");
+    }
+
+    #[test]
+    #[should_panic]
+    fn dont_identify_identifier() {
+        // number at the start
+        let x = "9_number";
+        // wrong characters
+        let y = "abc!this-is-bad+=!@#$%^&*";
+
+        // should panic here
+        let _ = self::Lexer::identify_token(x);
+        let _ = self::Lexer::identify_token(y);
+    }
+
+    #[test]
+    fn identify_a_line() {
+        let line = "LET x = 15 \n";
+        let result = self::Lexer::tokenize_line(line);
+
+        assert_eq!(result, vec![Token::Let, Token::Identifier("x".to_string(), IDENTIFIER_ID), Token::Assign, Token::Number(15, NUMBER_ID), Token::Newline]);
+    }
+
+    #[test]
+    fn identify_lines() {
+        let lines = "LET x == IF \n WHILE PRINT = true \n";
+        let result = self::Lexer::tokenize(lines.to_string());
+
+        assert_eq!(result,
+            vec![Token::Let,
+                Token::Identifier("x".to_string(), IDENTIFIER_ID),
+                Token::Equals,
+                Token::If,
+                Token::Newline,
+                Token::While,
+                Token::Print,
+                Token::Assign,
+                Token::Bool(true, BOOL_ID),
+                Token::Newline
+            ]);
+    }
+}
+
