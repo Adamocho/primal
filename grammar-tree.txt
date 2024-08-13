@@ -1,7 +1,7 @@
 programm ::= {statement}
 statement ::=  
     | "PRINT" value nl
-    | "LET" identifier "=" value nl
+    | "LET" identifier "=" (expression | string | bool) nl
     | "IF" comparisons "THEN" nl {statement} "ENDIF" nl
     | "WHILE" comparisons nl "DO" {statement} nl "ENDWHILE" nl
     | "INPUT" string identifier nl

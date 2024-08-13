@@ -10,7 +10,7 @@ use crate::lexer::{
 #[derive(Debug)]
 pub enum Statment {
     Print { value: Token },
-    Let { identifier: Token, value: Token },
+    Let { identifier: Token, expression: Vec<Token> },
     If { comparisons: Vec<Token>, statements: Vec<Statment> },
     While { comparisons: Vec<Token>, statements: Vec<Statment> },
     Input { string: Token, identifier: Token },
@@ -77,13 +77,21 @@ impl Parser {
 
                 self.match_token(Token::Assign);
 
-                self.value();
+                let expression;
+                let start;
 
-                let value = self.current.clone().unwrap();
+                if self.next == Some(Token::Newline) {
+                    self.value();
+                    expression = vec![self.current.clone().unwrap()];
+                } else {
+                    start = self.counter;
+                    self.expression();
+                    expression = self.tokens.get((start - 2)..(self.counter - 2)).unwrap().to_vec();
+                }
 
                 self.newline();
                 
-                Statment::Let { identifier, value }
+                Statment::Let { identifier, expression }
             },
             // "IF" comparisons "THEN" nl {statement} nl "ENDIF" nl
             Some(Token::If) => {
@@ -196,16 +204,19 @@ impl Parser {
     fn comparison(&mut self) {
         println!("Checking a comparison");
         
-        if let Some(Token::Bool(_, _)) | Some(Token::Identifier(_, _)) = self.current {
+        if let Some(Token::Bool(_, BOOL_ID)) | Some(Token::Identifier(_, BOOL_ID)) = self.current {
             self.next_token();
-            return;
+        } else {
+            self.expression();
         }
-
-        self.expression();
-
+        
         self.equals();
 
-        self.expression();
+        if let Some(Token::Bool(_, BOOL_ID)) | Some(Token::Identifier(_, BOOL_ID)) = self.current {
+            self.next_token();
+        } else {
+            self.expression();
+        }
     }
 
     // value ::= identifier | string | number | bool
