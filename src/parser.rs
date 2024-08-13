@@ -7,12 +7,19 @@ use crate::lexer::{
     NUMBER_ID, 
     IDENTIFIER_ID};
 
+pub enum Statment {
+    Print { value: Token },
+    Let { identifier: Token, value: Token },
+    If { comparison: Vec<Token>, statements: Vec<Statment> },
+    While { comparison: Vec<Token>, statments: Vec<Statment> },
+    Input { string: Token, identifier: Token },
+    Goto { identifier: Token },
+}
+
 #[derive(Debug)]
 pub struct Parser {
     tokens: Vec<Token>,
-    // start: usize,
     counter: usize,
-    // program: Vec<Token>,
     current: Option<Token>,
     next: Option<Token>,
 }
@@ -23,9 +30,7 @@ impl Parser {
     pub fn new(tokens: Vec<Token>) -> Parser {
         Parser {
             tokens,
-            // start: 0,
             counter: 0,
-            // program: vec![],
             current: None,
             next: None,
         }
@@ -45,6 +50,8 @@ impl Parser {
 
     // recognize grammar-tree statement
     fn recognize_statement(&mut self) {
+        let mut statement: Option<Statment> = None;
+
         match self.current {
             // "PRINT" value nl
             Some(Token::Print) => {
