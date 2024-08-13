@@ -7,13 +7,15 @@ use crate::lexer::{
     NUMBER_ID, 
     IDENTIFIER_ID};
 
+#[derive(Debug)]
 pub enum Statment {
     Print { value: Token },
     Let { identifier: Token, value: Token },
-    If { comparison: Vec<Token>, statements: Vec<Statment> },
-    While { comparison: Vec<Token>, statments: Vec<Statment> },
+    If { comparisons: Vec<Token>, statements: Vec<Statment> },
+    While { comparisons: Vec<Token>, statements: Vec<Statment> },
     Input { string: Token, identifier: Token },
     Goto { identifier: Token },
+    Empty,
 }
 
 #[derive(Debug)]
@@ -42,16 +44,14 @@ impl Parser {
         self.next_token();
 
         while self.next.is_some() && self.counter <= self.tokens.len() {
-            self.recognize_statement();
+            println!("{:?}", self.recognize_statement());
         }
 
         println!("Parsing done!");
     }
 
     // recognize grammar-tree statement
-    fn recognize_statement(&mut self) {
-        let mut statement: Option<Statment> = None;
-
+    fn recognize_statement(&mut self) -> Statment {
         match self.current {
             // "PRINT" value nl
             Some(Token::Print) => {
@@ -60,7 +60,11 @@ impl Parser {
 
                 self.value();
 
+                let value = self.current.clone().unwrap();
+
                 self.newline();
+
+                Statment::Print { value }
             },
             // "LET" identifier "=" value nl
             Some(Token::Let) => {
@@ -69,44 +73,66 @@ impl Parser {
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
 
+                let identifier = self.current.clone().unwrap();
+
                 self.match_token(Token::Assign);
 
                 self.value();
 
+                let value = self.current.clone().unwrap();
+
                 self.newline();
+                
+                Statment::Let { identifier, value }
             },
             // "IF" comparisons "THEN" nl {statement} nl "ENDIF" nl
             Some(Token::If) => {
                 println!("If-statement");
                 self.next_token();
 
+                let start = self.counter;
+
                 self.comparisons();
                 self.match_token(Token::Then);
 
+                let comparisons = self.tokens.get((start - 2)..(self.counter - 2)).unwrap().to_vec();
+
                 self.match_token(Token::Newline);
+
+                let mut statements: Vec<Statment> = Vec::new();
                 while self.current != Some(Token::Endif) {
-                    self.recognize_statement();
+                    statements.push(self.recognize_statement());
                 }
 
                 self.match_token(Token::Endif);
                 self.newline();
+
+                Statment::If { comparisons, statements }
             },
             // "WHILE" comparisons nl "DO" nl {statement} nl "ENDWHILE" nl
             Some(Token::While) => {
                 println!("While-statement");
                 self.next_token();
 
+                let start = self.counter;
+
                 self.comparisons();
                 self.newline();
+
+                let comparisons = self.tokens.get((start - 2)..(self.counter - 2)).unwrap().to_vec();
+
                 self.match_token(Token::Do);
 
+                let mut statements: Vec<Statment> = Vec::new();
                 self.match_token(Token::Newline);
                 while self.current != Some(Token::Endwhile) {
-                    self.recognize_statement();
+                    statements.push(self.recognize_statement());
                 }
 
                 self.match_token(Token::Endwhile);
                 self.newline();
+
+                Statment::While { comparisons, statements }
             },
             // "INPUT" string identifier nl
             Some(Token::Input) => {
@@ -114,8 +140,14 @@ impl Parser {
                 self.next_token();
 
                 self.match_token(Token::String(PLACEHOLDER, STRING_ID));
+                let string = self.current.clone().unwrap();
+
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
+                let identifier = self.current.clone().unwrap();
+
                 self.newline();
+
+                Statment::Input { string, identifier }
             },
             // "GOTO" identifier nl
             Some(Token::Goto) => {
@@ -123,7 +155,11 @@ impl Parser {
                 self.next_token();
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
+                let identifier = self.current.clone().unwrap();
+
                 self.newline();
+
+                Statment::Goto { identifier }
             },
             // nl ::= '\n'+
             Some(Token::Newline) => {
@@ -134,6 +170,8 @@ impl Parser {
                 if self.current == Some(Token::Newline) {
                     self.newline();
                 }
+
+                Statment::Empty
             },
             _ => {
                 panic!("Syntax error: Token not recognized: {:#?}", self.current);

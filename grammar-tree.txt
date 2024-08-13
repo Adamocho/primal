@@ -4,7 +4,7 @@ statement ::=
     | "LET" identifier "=" value nl
     | "IF" comparisons "THEN" nl {statement} "ENDIF" nl
     | "WHILE" comparisons nl "DO" {statement} nl "ENDWHILE" nl
-    | "INPUT" string identifier
+    | "INPUT" string identifier nl
     | "GOTO" identifier nl
 comparisons ::= comparison {("AND" | "OR") comparison}
 comparison ::= (expression equals expression) | boolean
