@@ -24,6 +24,7 @@ pub struct Parser {
     counter: usize,
     current: Option<Token>,
     next: Option<Token>,
+    previous: Option<Token>,
 }
 
 const PLACEHOLDER: String = String::new();
@@ -35,6 +36,7 @@ impl Parser {
             counter: 0,
             current: None,
             next: None,
+            previous: None,
         }
     }
 
@@ -61,7 +63,7 @@ impl Parser {
 
                 self.value();
 
-                let value = self.current.clone().unwrap();
+                let value = self.previous.clone().unwrap();
 
                 self.newline();
 
@@ -73,7 +75,7 @@ impl Parser {
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
 
-                let identifier = self.current.clone().unwrap();
+                let identifier = self.previous.clone().unwrap();
 
                 self.match_token(Token::Assign);
 
@@ -82,7 +84,7 @@ impl Parser {
 
                 if self.next == Some(Token::Newline) {
                     self.value();
-                    expression = vec![self.current.clone().unwrap()];
+                    expression = vec![self.previous.clone().unwrap()];
                 } else {
                     start = self.counter;
                     self.expression();
@@ -145,10 +147,10 @@ impl Parser {
                 self.next_token();
 
                 self.match_token(Token::String(PLACEHOLDER, STRING_ID));
-                let string = self.current.clone().unwrap();
+                let string = self.previous.clone().unwrap();
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
-                let identifier = self.current.clone().unwrap();
+                let identifier = self.previous.clone().unwrap();
 
                 self.newline();
 
@@ -159,7 +161,7 @@ impl Parser {
                 self.next_token();
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
-                let identifier = self.current.clone().unwrap();
+                let identifier = self.previous.clone().unwrap();
 
                 self.newline();
 
@@ -363,6 +365,7 @@ impl Parser {
     }
 
     fn next_token(&mut self) {
+        self.previous.clone_from(&self.current);
         self.current.clone_from(&self.next);
         self.next = self.tokens.get(self.counter).cloned();
         self.counter += 1;
