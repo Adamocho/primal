@@ -39,7 +39,7 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Vec<Statement> {
-        // initialize
+        // initialize current, next, counter
         self.next_token();
         self.next_token();
 
@@ -49,8 +49,6 @@ impl Parser {
             // println!("{:?}", self.recognize_statement());
             statements.push(self.recognize_statement());
         }
-
-        // println!("Parsing done!");
         statements
     }
 
@@ -59,7 +57,6 @@ impl Parser {
         match self.current {
             // "PRINT" value nl
             Some(Token::Print) => {
-                println!("Print-statement");
                 self.next_token();
 
                 self.value();
@@ -72,7 +69,6 @@ impl Parser {
             },
             // "LET" identifier "=" value nl
             Some(Token::Let) => {
-                println!("Let-statement");
                 self.next_token();
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
@@ -90,7 +86,7 @@ impl Parser {
                 } else {
                     start = self.counter;
                     self.expression();
-                    expression = self.tokens.get((start - 2)..(self.counter - 2)).unwrap().to_vec();
+                    expression = self.get_range_of_tokens(start, self.counter);
                 }
 
                 self.newline();
@@ -99,7 +95,6 @@ impl Parser {
             },
             // "IF" comparisons "THEN" nl {statement} nl "ENDIF" nl
             Some(Token::If) => {
-                println!("If-statement");
                 self.next_token();
 
                 let start = self.counter;
@@ -107,7 +102,7 @@ impl Parser {
                 self.comparisons();
                 self.match_token(Token::Then);
 
-                let comparisons = self.tokens.get((start - 2)..(self.counter - 2)).unwrap().to_vec();
+                let comparisons = self.get_range_of_tokens(start, self.counter - 1);
 
                 self.match_token(Token::Newline);
 
@@ -123,7 +118,6 @@ impl Parser {
             },
             // "WHILE" comparisons nl "DO" nl {statement} nl "ENDWHILE" nl
             Some(Token::While) => {
-                println!("While-statement");
                 self.next_token();
 
                 let start = self.counter;
@@ -131,7 +125,7 @@ impl Parser {
                 self.comparisons();
                 self.newline();
 
-                let comparisons = self.tokens.get((start - 2)..(self.counter - 2)).unwrap().to_vec();
+                let comparisons = self.get_range_of_tokens(start, self.counter - 1);
 
                 self.match_token(Token::Do);
 
@@ -148,7 +142,6 @@ impl Parser {
             },
             // "INPUT" string identifier nl
             Some(Token::Input) => {
-                println!("Input-statement");
                 self.next_token();
 
                 self.match_token(Token::String(PLACEHOLDER, STRING_ID));
@@ -163,7 +156,6 @@ impl Parser {
             },
             // "GOTO" identifier nl
             Some(Token::Goto) => {
-                println!("Goto-statement");
                 self.next_token();
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
@@ -175,7 +167,6 @@ impl Parser {
             },
             // nl ::= '\n'+
             Some(Token::Newline) => {
-                println!("Newline");
                 self.next_token();
 
                 // clear newlines till next different token
@@ -191,10 +182,14 @@ impl Parser {
         }
     }
 
+    fn get_range_of_tokens(&mut self, start: usize, end: usize) -> Vec<Token> {
+        const SUBTRACT_FROM_COUNTER: usize = 2;
+
+        self.tokens.get((start - SUBTRACT_FROM_COUNTER)..(end - SUBTRACT_FROM_COUNTER)).unwrap().to_vec()
+    }
+
     // comparisons ::= comparison {("AND" | "OR") comparison}
     fn comparisons(&mut self) {
-        println!("comparisons - plural");
-
         self.comparison();
 
         while self.current == Some(Token::And) || self.current == Some(Token::Or) {
@@ -206,8 +201,6 @@ impl Parser {
 
     // comparison ::= (expression equals expression) | ("true" | "false")
     fn comparison(&mut self) {
-        println!("Checking a comparison");
-        
         if let Some(Token::Bool(_, BOOL_ID)) | Some(Token::Identifier(_, BOOL_ID)) = self.current {
             self.next_token();
         } else {
@@ -225,8 +218,6 @@ impl Parser {
 
     // value ::= identifier | string | number | bool
     fn value(&mut self) {
-        println!("Value");
-
         match self.current {
             Some(Token::Identifier(_, id))
             | Some(Token::String(_, id))
@@ -257,8 +248,6 @@ impl Parser {
 
     // expression ::= term {("+" | "-") term}
     fn expression(&mut self) {
-        println!("Evaluating expression");
-
         self.term();
 
          while self.current == Some(Token::Plus) || self.current == Some(Token::Minus) {
@@ -271,8 +260,6 @@ impl Parser {
 
     // term ::= unary {("*" | "/" | "%") unary}
     fn term(&mut self) {
-        println!("Term");
-
         self.unary();
 
          while self.current == Some(Token::Times)
@@ -286,8 +273,6 @@ impl Parser {
 
     // unary ::= ["+" | "-"] primary
     fn unary(&mut self) {
-        println!("Unary");
-
         if self.current == Some(Token::Plus) || self.current == Some(Token::Minus) {
             self.next_token();
         }
@@ -297,8 +282,6 @@ impl Parser {
 
     // primary ::= identifier | number
     fn primary(&mut self) {
-        println!("Primary");
-
         match self.current {
             Some(Token::Identifier(_, id)) | Some(Token::Number(_, id)) => {
                 if id == IDENTIFIER_ID || id == NUMBER_ID { self.next_token(); return; }
