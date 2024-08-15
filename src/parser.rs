@@ -8,11 +8,11 @@ use crate::lexer::{
     IDENTIFIER_ID};
 
 #[derive(Debug)]
-pub enum Statment {
+pub enum Statement {
     Print { value: Token },
     Let { identifier: Token, expression: Vec<Token> },
-    If { comparisons: Vec<Token>, statements: Vec<Statment> },
-    While { comparisons: Vec<Token>, statements: Vec<Statment> },
+    If { comparisons: Vec<Token>, statements: Vec<Statement> },
+    While { comparisons: Vec<Token>, statements: Vec<Statement> },
     Input { string: Token, identifier: Token },
     Goto { identifier: Token },
     Empty,
@@ -38,20 +38,24 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) {
+    pub fn parse(&mut self) -> Vec<Statement> {
         // initialize
         self.next_token();
         self.next_token();
 
+        let mut statements: Vec<Statement> = vec![];
+
         while self.next.is_some() && self.counter <= self.tokens.len() {
-            println!("{:?}", self.recognize_statement());
+            // println!("{:?}", self.recognize_statement());
+            statements.push(self.recognize_statement());
         }
 
-        println!("Parsing done!");
+        // println!("Parsing done!");
+        statements
     }
 
     // recognize grammar-tree statement
-    fn recognize_statement(&mut self) -> Statment {
+    fn recognize_statement(&mut self) -> Statement {
         match self.current {
             // "PRINT" value nl
             Some(Token::Print) => {
@@ -64,7 +68,7 @@ impl Parser {
 
                 self.newline();
 
-                Statment::Print { value }
+                Statement::Print { value }
             },
             // "LET" identifier "=" value nl
             Some(Token::Let) => {
@@ -91,7 +95,7 @@ impl Parser {
 
                 self.newline();
                 
-                Statment::Let { identifier, expression }
+                Statement::Let { identifier, expression }
             },
             // "IF" comparisons "THEN" nl {statement} nl "ENDIF" nl
             Some(Token::If) => {
@@ -107,7 +111,7 @@ impl Parser {
 
                 self.match_token(Token::Newline);
 
-                let mut statements: Vec<Statment> = Vec::new();
+                let mut statements: Vec<Statement> = Vec::new();
                 while self.current != Some(Token::Endif) {
                     statements.push(self.recognize_statement());
                 }
@@ -115,7 +119,7 @@ impl Parser {
                 self.match_token(Token::Endif);
                 self.newline();
 
-                Statment::If { comparisons, statements }
+                Statement::If { comparisons, statements }
             },
             // "WHILE" comparisons nl "DO" nl {statement} nl "ENDWHILE" nl
             Some(Token::While) => {
@@ -131,7 +135,7 @@ impl Parser {
 
                 self.match_token(Token::Do);
 
-                let mut statements: Vec<Statment> = Vec::new();
+                let mut statements: Vec<Statement> = Vec::new();
                 self.match_token(Token::Newline);
                 while self.current != Some(Token::Endwhile) {
                     statements.push(self.recognize_statement());
@@ -140,7 +144,7 @@ impl Parser {
                 self.match_token(Token::Endwhile);
                 self.newline();
 
-                Statment::While { comparisons, statements }
+                Statement::While { comparisons, statements }
             },
             // "INPUT" string identifier nl
             Some(Token::Input) => {
@@ -155,7 +159,7 @@ impl Parser {
 
                 self.newline();
 
-                Statment::Input { string, identifier }
+                Statement::Input { string, identifier }
             },
             // "GOTO" identifier nl
             Some(Token::Goto) => {
@@ -167,7 +171,7 @@ impl Parser {
 
                 self.newline();
 
-                Statment::Goto { identifier }
+                Statement::Goto { identifier }
             },
             // nl ::= '\n'+
             Some(Token::Newline) => {
@@ -179,7 +183,7 @@ impl Parser {
                     self.newline();
                 }
 
-                Statment::Empty
+                Statement::Empty
             },
             _ => {
                 panic!("Syntax error: Token not recognized: {:#?}", self.current);
