@@ -50,7 +50,6 @@ impl Parser {
         let mut statements: Vec<Statement> = vec![];
 
         while self.next.is_some() && self.counter <= self.tokens.len() {
-            // println!("{:?}", self.recognize_statement());
             statements.push(self.recognize_statement());
         }
         statements
@@ -162,19 +161,6 @@ impl Parser {
 
                 Statement::Input { string, identifier }
             },
-            // "GOTO" identifier nl
-            Some(Token::Goto) => {
-                self.next_token();
-
-                self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
-                let identifier = self.previous.clone().unwrap();
-
-                self.check_identifier(identifier.clone());
-
-                self.newline();
-
-                Statement::Goto { identifier }
-            },
             // nl ::= '\n'+
             Some(Token::Newline) => {
                 self.next_token();
@@ -188,14 +174,6 @@ impl Parser {
             },
             _ => {
                 panic!("Syntax error: Token not recognized: {:#?}", self.current);
-            }
-        }
-    }
-
-    fn check_identifier(&mut self, identifier: Token) {
-        if let Token::Identifier(variable, _) = identifier {
-            if self.used_identifiers.get(&variable).is_none() {
-                panic!("Compile error: using uninitialized variable {:#?}", &variable);
             }
         }
     }

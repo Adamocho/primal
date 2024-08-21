@@ -12,7 +12,6 @@ pub enum Token {
     End,
     Endif,
     Endwhile,
-    Goto,
 
     Assign,
 
@@ -152,7 +151,6 @@ impl Lexer {
             "END" => Token::End,
             "ENDIF" => Token::Endif,
             "ENDWHILE" => Token::Endwhile,
-            "GOTO" => Token::Goto,
             "AND" => Token::And,
             "OR" => Token::Or,
 
