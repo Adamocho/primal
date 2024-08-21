@@ -1,5 +1,5 @@
 use core::panic;
-
+use std::collections::HashMap;
 use crate::lexer::Token;
 use crate::lexer::{
     BOOL_ID, 
@@ -25,6 +25,7 @@ pub struct Parser {
     current: Option<Token>,
     next: Option<Token>,
     previous: Option<Token>,
+    used_identifiers: HashMap<String, Token>,
 }
 
 const PLACEHOLDER: String = String::new();
@@ -37,6 +38,7 @@ impl Parser {
             current: None,
             next: None,
             previous: None,
+            used_identifiers: HashMap::new(),
         }
     }
 
@@ -76,6 +78,8 @@ impl Parser {
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
 
                 let identifier = self.previous.clone().unwrap();
+
+                self.add_identifier(identifier.clone());
 
                 self.match_token(Token::Assign);
 
@@ -151,6 +155,8 @@ impl Parser {
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
                 let identifier = self.previous.clone().unwrap();
+                
+                self.add_identifier(identifier.clone());
 
                 self.newline();
 
@@ -162,6 +168,8 @@ impl Parser {
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
                 let identifier = self.previous.clone().unwrap();
+
+                self.check_identifier(identifier.clone());
 
                 self.newline();
 
@@ -180,6 +188,28 @@ impl Parser {
             },
             _ => {
                 panic!("Syntax error: Token not recognized: {:#?}", self.current);
+            }
+        }
+    }
+
+    fn check_identifier(&mut self, identifier: Token) {
+        if let Token::Identifier(variable, _) = identifier {
+            if self.used_identifiers.get(&variable).is_none() {
+                panic!("Compile error: using uninitialized variable {:#?}", &variable);
+            }
+        }
+    }
+
+    fn check_identifier_from_string(&mut self, identifier: String) {
+        if self.used_identifiers.get(&identifier).is_none() {
+            panic!("Compile error: using uninitialized variable {}", identifier);
+        }
+    }
+
+    fn add_identifier(&mut self, identifier: Token) {
+        if let Token::Identifier(ref variable, _) = identifier {
+            if self.used_identifiers.get(variable).is_none() {
+                self.used_identifiers.insert(variable.to_string(), identifier);
             }
         }
     }
@@ -203,32 +233,40 @@ impl Parser {
 
     // comparison ::= (expression equals expression) | ("true" | "false")
     fn comparison(&mut self) {
-        if let Some(Token::Bool(_, BOOL_ID)) | Some(Token::Identifier(_, BOOL_ID)) = self.current {
-            self.next_token();
-        } else {
-            self.expression();
-        }
+        self.comparison_branch();
         
         self.equals();
 
-        if let Some(Token::Bool(_, BOOL_ID)) | Some(Token::Identifier(_, BOOL_ID)) = self.current {
-            self.next_token();
-        } else {
-            self.expression();
+        self.comparison_branch();
+    }
+
+    fn comparison_branch(&mut self) {
+        match &self.current {
+            Some(Token::Identifier(variable, IDENTIFIER_ID)) => {
+                self.check_identifier_from_string(variable.to_string());
+                self.expression();
+            }
+            Some(Token::Bool(_, BOOL_ID)) => self.next_token(),
+            _ => self.next_token(),
         }
     }
 
     // value ::= identifier | string | number | bool
     fn value(&mut self) {
-        match self.current {
-            Some(Token::Identifier(_, id))
-            | Some(Token::String(_, id))
+        match &self.current {
+            Some(Token::Identifier(identifier, id)) => {
+                if *id == IDENTIFIER_ID {
+                    self.check_identifier_from_string(identifier.to_string());
+                    self.next_token(); return;
+                }
+            },
+            Some(Token::String(_, id))
             | Some(Token::Number(_, id))
             | Some(Token::Bool(_, id)) => {
-                if id == IDENTIFIER_ID
-                || id == STRING_ID
-                || id == NUMBER_ID
-                || id == BOOL_ID { 
+                if *id == IDENTIFIER_ID
+                || *id == STRING_ID
+                || *id == NUMBER_ID
+                || *id == BOOL_ID { 
                     self.next_token(); return;
                 }
             },
@@ -245,7 +283,6 @@ impl Parser {
                 self.current
             )
         );
-        
     }
 
     // expression ::= term {("+" | "-") term}
@@ -257,7 +294,6 @@ impl Parser {
 
             self.term();
         }
-
     }
 
     // term ::= unary {("*" | "/" | "%") unary}
@@ -284,9 +320,16 @@ impl Parser {
 
     // primary ::= identifier | number
     fn primary(&mut self) {
-        match self.current {
-            Some(Token::Identifier(_, id)) | Some(Token::Number(_, id)) => {
-                if id == IDENTIFIER_ID || id == NUMBER_ID { self.next_token(); return; }
+        match &self.current {
+            Some(Token::Identifier(identifier, id)) => {
+                if *id == IDENTIFIER_ID { 
+                    self.check_identifier_from_string(identifier.to_string());
+                    self.next_token();
+                    return;
+                }
+            },
+            Some(Token::Number(_, id)) => {
+                if *id == NUMBER_ID { self.next_token(); return; }
             },
             _ => {}
         }
@@ -353,6 +396,7 @@ impl Parser {
     }
 
     // match special cases of tokens - Bool, String, Number, Identifier
+    // do not check Identifier - already checked before every function use
     fn match_value_token(&mut self, expected: Token, id: u8) {
         match self.current {
             Some(Token::Bool(_, current_id)) | Some(Token::String(_, current_id)) |
