@@ -3,12 +3,9 @@ PRINT "At last..." # A sample comment
 # Sample INPUT
 INPUT "Gimmie something" user_input
 
-# A used variable
+# A variable
 LET x = 1
 LET is_number = true
-
-# An unused variable
-    #LET y = 1
 
 # Fizzbuzz
 WHILE x <= 15
