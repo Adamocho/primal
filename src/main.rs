@@ -1,5 +1,5 @@
 use std::{env, fs};
-use primal::{lexer, parser};
+use primal::{emitter, lexer, parser};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -11,9 +11,13 @@ fn main() {
 
     let tokens = lexer::Lexer::tokenize(file_contents);
     dbg!(&tokens);
+
     let mut parser = parser::Parser::new(tokens);
     let parsed = parser.parse();
 
+    let mut emitter = emitter::Emitter::new(parsed);
+    let lines = emitter.emit();
+
     // let mut emitter = emitter::Emitter::new(parser.parse());
-    dbg!(parsed);
+    // dbg!(parsed);
 }
