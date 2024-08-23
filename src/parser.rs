@@ -14,7 +14,6 @@ pub enum Statement {
     If { comparisons: Vec<Token>, statements: Vec<Statement> },
     While { comparisons: Vec<Token>, statements: Vec<Statement> },
     Input { string: Token, identifier: Token },
-    Goto { identifier: Token },
     Empty,
 }
 
