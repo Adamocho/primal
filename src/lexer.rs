@@ -182,6 +182,41 @@ impl Lexer {
             },
         }
     }
+
+    pub fn convert_token_to_string(token: Token) -> String {
+        match token {
+            Token::Newline => "\n".to_string(),
+            Token::Print => "PRINT".to_string(),
+            Token::Input => "INPUT".to_string(),
+            Token::Let => "LET".to_string(),
+            Token::If => "IF".to_string(),
+            Token::Then => "THEN".to_string(),
+            Token::While => "WHILE".to_string(),
+            Token::Do => "DO".to_string(),
+            Token::End => "END".to_string(),
+            Token::Endif => "ENDIF".to_string(),
+            Token::Endwhile => "ENDWHILE".to_string(),
+            Token::And => "AND".to_string(),
+            Token::Or => "OR".to_string(),
+            Token::Assign => "=".to_string(),
+            Token::Equals =>"==".to_string(),
+            Token::NotEquals =>"!=".to_string(),
+            Token::MoreThanEquals =>"=>".to_string(),
+            Token::MoreThan => ">".to_string(),
+            Token::LessThanEquals =>"<=".to_string(),
+            Token::LessThan => "<".to_string(),
+            Token::Plus => "+".to_string(),
+            Token::Minus => "-".to_string(),
+            Token::Times => "*".to_string(),
+            Token::Divide => "/".to_string(),
+            Token::Modulo => "%".to_string(),
+            Token::Bool(true, _) => "true".to_string(),
+            Token::Bool(false, _) => "false".to_string(),
+            Token::String(value, _) => value,
+            Token::Number(value, _) => value.to_string(),
+            Token::Identifier(value, _) => value,
+        }
+    }
 }
 
 
