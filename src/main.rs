@@ -10,7 +10,6 @@ fn main() {
         .expect("Should have been able to read a file");
 
     let tokens = lexer::Lexer::tokenize(file_contents);
-    dbg!(&tokens);
 
     let mut parser = parser::Parser::new(tokens);
     let parsed = parser.parse();
@@ -18,6 +17,6 @@ fn main() {
     let mut emitter = emitter::Emitter::new(parsed);
     let lines = emitter.emit();
 
-    // let mut emitter = emitter::Emitter::new(parser.parse());
-    // dbg!(parsed);
+    fs::create_dir("./output").expect("Should be able to create an \'output\' dir");
+    let _output_file = fs::write("./output/program.rs", lines.join("\n")).expect("Writing lines to output rust file");
 }
