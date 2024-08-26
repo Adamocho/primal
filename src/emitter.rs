@@ -44,7 +44,7 @@ impl Emitter {
             Statement::If { comparisons, statements } => {
                 let expr = Self::convert_expr_to_string(comparisons.clone());
 
-                output.push("if ".to_string() + &expr + "{");
+                output.push("if ".to_string() + &expr + " {");
 
                 let mut other_statements: Vec<String> = 
                 statements
@@ -58,10 +58,27 @@ impl Emitter {
                 output.push("}".to_string());
             }
             Statement::While { comparisons, statements } => {
+                let expr = Self::convert_expr_to_string(comparisons.clone());
 
+                output.push("while ".to_string() + &expr + " {");
+
+                let mut other_statements: Vec<String> = 
+                statements
+                    .iter()
+                    .map(|s| { self.evaluate(s) })
+                    .flatten()
+                    .collect();
+
+                output.append(&mut other_statements);
+
+                output.push("}".to_string());
             }
             Statement::Input { string, identifier } => {
+                let text = Self::unwrap_value_token(string.clone());
+                let variable = Self::unwrap_value_token(identifier.clone());
 
+                output.push("println!(\"{}\", ".to_string() + &text + ");");
+                output.push("io::stdin().read_line(&mut ".to_string() + &variable + ").expect(\"Failed to read user input\");");
             }
             Statement::Empty => {}
         }
@@ -71,7 +88,7 @@ impl Emitter {
 
     fn convert_expr_to_string(expression: Vec<Token>) -> String {
         let mut combined = String::new();                
-        expression.iter().map(|token| { combined += &(Lexer::convert_token_to_string(token.clone()) + " ")});
+        expression.iter().for_each(|token| { combined += &(Lexer::convert_token_to_string(token.clone()) + " ")});
 
         combined
     }
