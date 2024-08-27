@@ -18,10 +18,13 @@ fn main() {
     let mut emitter = emitter::Emitter::new(parsed);
     let lines = emitter.emit();
 
-    let directory = fs::create_dir("./output");
+    let directory = fs::create_dir("./src/bin");
     if directory.is_err_and(|err| err.kind() != ErrorKind::AlreadyExists) {
-        panic!("Could not create '/output' directory");
+        panic!("Could not create '/src/bin' directory");
     }
 
-    fs::write("./output/program.rs", lines.join("\n")).expect("Writing lines to output rust file");
+    fs::write("./src/bin/program.rs", lines.join("\n")).expect("Writing lines to output rust file");
+
+    // run program
+    include!("bin/program.rs");
 }

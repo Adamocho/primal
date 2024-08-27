@@ -18,10 +18,15 @@ impl Emitter {
     pub fn emit(&mut self) -> Vec<String> {
         let mut used_variables: HashMap<String, u8> = HashMap::new();
 
-        self.statements
+        let mut lines = self.statements
             .iter()
             .flat_map(|statement| Self::evaluate(statement, &mut used_variables))
-            .collect()
+            .collect::<Vec<String>>();
+
+        lines.insert(0, "{".to_string());
+        lines.push("}".to_string());
+
+        lines
     }
 
     fn evaluate(statement: &Statement, used_variables: &mut HashMap<String, u8>) -> Vec<String> {
