@@ -6,27 +6,28 @@ use crate::parser::Statement;
 #[derive(Debug)]
 pub struct Emitter {
     statements: Vec<Statement>,
-    identifiers: HashMap<String, u8>,
+    // identifiers: HashMap<String, u8>,
 }
 
 impl Emitter {
     pub fn new(statements: Vec<Statement>) -> Emitter {
         Emitter {
             statements,
-            identifiers: HashMap::new(),
+            // identifiers: HashMap::new(),
         }
     }
 
     pub fn emit(&mut self) -> Vec<String> {
+        let mut used_variables: HashMap<String, u8> = HashMap::new();
 
         self.statements
             .iter()
-            .map(|statement| self.evaluate(statement))
+            .map(|statement| self.evaluate(statement, &mut used_variables))
             .flatten()
             .collect()
     }
 
-    fn evaluate(&self, statement: &Statement) -> Vec<String> {
+    fn evaluate(&self, statement: &Statement, used_variables: &mut HashMap<String, u8>) -> Vec<String> {
         let mut output: Vec<String> = vec![];
 
         match statement {
@@ -39,7 +40,12 @@ impl Emitter {
                 let variable = Self::unwrap_value_token(identifier.clone());
                 let expr = Self::convert_expr_to_string(expression.clone());
 
-                output.push("let mut ".to_owned() + &variable + " = " + &expr + ";");
+                if used_variables.get(&variable).is_some() {
+                    output.push(variable + " = " + &expr + ";");
+                } else {
+                    output.push("let mut ".to_owned() + &variable + " = " + &expr + ";");
+                    used_variables.insert(variable, 0);
+                }
             }
             Statement::If { comparisons, statements } => {
                 let expr = Self::convert_expr_to_string(comparisons.clone());
@@ -49,7 +55,7 @@ impl Emitter {
                 let mut other_statements: Vec<String> = 
                 statements
                     .iter()
-                    .map(|s| { self.evaluate(s) })
+                    .map(|s| { self.evaluate(s, used_variables) })
                     .flatten()
                     .collect();
 
@@ -65,7 +71,7 @@ impl Emitter {
                 let mut other_statements: Vec<String> = 
                 statements
                     .iter()
-                    .map(|s| { self.evaluate(s) })
+                    .map(|s| { self.evaluate(s, used_variables) })
                     .flatten()
                     .collect();
 
