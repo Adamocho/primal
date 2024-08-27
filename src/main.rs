@@ -1,4 +1,5 @@
-use std::{env, fs};
+use core::panic;
+use std::{env, fs, io::ErrorKind};
 use primal::{emitter, lexer, parser};
 
 fn main() {
@@ -17,6 +18,10 @@ fn main() {
     let mut emitter = emitter::Emitter::new(parsed);
     let lines = emitter.emit();
 
-    fs::create_dir("./output").expect("Should be able to create an \'output\' dir");
-    let _output_file = fs::write("./output/program.rs", lines.join("\n")).expect("Writing lines to output rust file");
+    let directory = fs::create_dir("./output");
+    if directory.is_err_and(|err| err.kind() != ErrorKind::AlreadyExists) {
+        panic!("Could not create '/output' directory");
+    }
+
+    fs::write("./output/program.rs", lines.join("\n")).expect("Writing lines to output rust file");
 }
