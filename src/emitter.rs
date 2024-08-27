@@ -6,14 +6,12 @@ use crate::parser::Statement;
 #[derive(Debug)]
 pub struct Emitter {
     statements: Vec<Statement>,
-    // identifiers: HashMap<String, u8>,
 }
 
 impl Emitter {
     pub fn new(statements: Vec<Statement>) -> Emitter {
         Emitter {
             statements,
-            // identifiers: HashMap::new(),
         }
     }
 
@@ -50,7 +48,7 @@ impl Emitter {
             Statement::If { comparisons, statements } => {
                 let expr = Self::convert_expr_to_string(comparisons.clone());
 
-                output.push("if ".to_string() + &expr + " {");
+                output.push("if ".to_owned() + &expr + " {");
 
                 let mut other_statements: Vec<String> = 
                 statements
@@ -66,7 +64,7 @@ impl Emitter {
             Statement::While { comparisons, statements } => {
                 let expr = Self::convert_expr_to_string(comparisons.clone());
 
-                output.push("while ".to_string() + &expr + " {");
+                output.push("while ".to_owned() + &expr + " {");
 
                 let mut other_statements: Vec<String> = 
                 statements
@@ -83,8 +81,11 @@ impl Emitter {
                 let text = Self::unwrap_value_token(string.clone());
                 let variable = Self::unwrap_value_token(identifier.clone());
 
-                output.push("println!(\"{}\", ".to_string() + &text + ");");
-                output.push("io::stdin().read_line(&mut ".to_string() + &variable + ").expect(\"Failed to read user input\");");
+                if !used_variables.contains_key(&variable) {
+                    output.push("let mut ".to_owned() + &variable + " = Default::default();");
+                }
+                output.push("println!(\"{}\", ".to_owned() + &text + ");");
+                output.push("std::io::stdin().read_line(&mut ".to_owned() + &variable + ").expect(\"Failed to read user input\");");
             }
             Statement::Empty => {}
         }
