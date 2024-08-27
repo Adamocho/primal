@@ -20,12 +20,11 @@ impl Emitter {
 
         self.statements
             .iter()
-            .map(|statement| self.evaluate(statement, &mut used_variables))
-            .flatten()
+            .flat_map(|statement| Self::evaluate(statement, &mut used_variables))
             .collect()
     }
 
-    fn evaluate(&self, statement: &Statement, used_variables: &mut HashMap<String, u8>) -> Vec<String> {
+    fn evaluate(statement: &Statement, used_variables: &mut HashMap<String, u8>) -> Vec<String> {
         let mut output: Vec<String> = vec![];
 
         match statement {
@@ -53,8 +52,7 @@ impl Emitter {
                 let mut other_statements: Vec<String> = 
                 statements
                     .iter()
-                    .map(|s| { self.evaluate(s, used_variables) })
-                    .flatten()
+                    .flat_map(|s| { Self::evaluate(s, used_variables) })
                     .collect();
 
                 output.append(&mut other_statements);
@@ -69,8 +67,7 @@ impl Emitter {
                 let mut other_statements: Vec<String> = 
                 statements
                     .iter()
-                    .map(|s| { self.evaluate(s, used_variables) })
-                    .flatten()
+                    .flat_map(|s| { Self::evaluate(s, used_variables) })
                     .collect();
 
                 output.append(&mut other_statements);

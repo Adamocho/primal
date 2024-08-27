@@ -178,14 +178,14 @@ impl Parser {
     }
 
     fn check_identifier_from_string(&mut self, identifier: String) {
-        if self.used_identifiers.get(&identifier).is_none() {
+        if !self.used_identifiers.contains_key(&identifier) {
             panic!("Compile error: using uninitialized variable {}", identifier);
         }
     }
 
     fn add_identifier(&mut self, identifier: Token) {
         if let Token::Identifier(ref variable, _) = identifier {
-            if self.used_identifiers.get(variable).is_none() {
+            if !self.used_identifiers.contains_key(variable) {
                 self.used_identifiers.insert(variable.to_string(), identifier);
             }
         }
