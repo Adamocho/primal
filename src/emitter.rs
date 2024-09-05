@@ -23,7 +23,7 @@ impl Emitter {
             .flat_map(|statement| Self::evaluate(statement, &mut used_variables))
             .collect::<Vec<String>>();
 
-        lines.insert(0, "{".to_string());
+        lines.insert(0, "fn main() {".to_string());
         lines.push("}".to_string());
 
         lines
