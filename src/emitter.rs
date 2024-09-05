@@ -88,6 +88,7 @@ impl Emitter {
                 }
                 output.push("println!(\"{}\", ".to_owned() + &text + ");");
                 output.push("std::io::stdin().read_line(&mut ".to_owned() + &variable + ").expect(\"Failed to read user input\");");
+                output.push("let mut ".to_owned() + &variable + " = user_input.trim().parse().unwrap();");
             }
             Statement::Empty => {}
         }
