@@ -26,13 +26,19 @@ It's split in two, binary and library, parts.
 
 ### Library part
 
-The majority or code will be here.
+Create a working rust code.
 
-### Binary part
+### Binary (execute) part
 
-Only for evoking the (`primal` or similar) command in the terminal.
+Execute the code created with the library.
 
-It will just be locating a given file and giving it the the whole compiling machine.
+> NOTE:
+> Use the shell script `primal.sh` to run a desired file:
+```bash
+bash primal.sh test.roq
+# Or give it +x permissions and simply execute
+./primal.sh test.roq
+```
 
 ## Grammar-tree
 
@@ -43,18 +49,15 @@ See [grammar-tree.txt](./grammar-tree.txt)
 | Keyword | Desc | Showcase | Options |
 | --------------- | --------------- | --------------- | --------------- |
 | LET | define a variable | `LET x = 5` | multiple types available |
-| INPUT | ask user for input (number) | `INPUT user_guess` | multiple types available |
-| IF ... THEN? | control flow | `IF true THEN` / `IF x == 5 THEN` | for now without `ELSE` |
-| WHILE ... FINISH / END | Basic loops | `WHILE x > 10 DO ... END` | - |
-| DO ... LOOP {WHILE} | - | - | - |
-| FOR ... DO ... FINISH | Basic for loop | `FOR x TO -5 STEP -1 DO` | - |
-| GOTO ... | Like switch statement | - | - |
-| PRINT | print valiables or text or else | `PRINT "Hello, World!"` | - |
+| INPUT | ask user for input (number) | `INPUT "How much cheese?" user_guess` | multiple types available |
+| IF ... THEN? | control flow | `IF true THEN` / `IF x == 5 THEN ... ENDIF` | - |
+| WHILE ... FINISH / END | Basic loops | `WHILE x > 10 DO ... ENDWHILE` | - |
+| PRINT | print valiables or text or else | `PRINT "Hello, World!"` | Can be a variable |
 
 Not likely to be implemented
 | Keyword | Desc | Showcase | Options |
 | --------------- | --------------- | --------------- | --------------- |
-| LIST | output a [quine](https://en.wikipedia.org/wiki/Quine) :) | `LIST` | - | - |
+| LIST | output a [quine](https://en.wikipedia.org/wiki/Quine) =D | `LIST` | - | - |
 
 ## Other functionality
 
@@ -79,4 +82,9 @@ Comments apply till the end of the line
 ```
 PRINT "Hi mom!" # This is a comment LET x = 1 - it doesn't work here
 ```
+
+### Status
+
+MVP (Minimum Viable Product) state reached.
+Now is the time for some upgrades!
 
