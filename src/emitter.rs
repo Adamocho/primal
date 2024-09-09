@@ -51,13 +51,13 @@ impl Emitter {
                     used_variables.insert(variable, 0);
                 }
             }
-            Statement::If { comparisons, statements } => {
-                let expr = Self::convert_expr_to_string(comparisons.clone());
+            Statement::If { condition, if_body } => {
+                let expr = Self::convert_expr_to_string(condition.clone());
 
                 output.push("if ".to_owned() + &expr + " {");
 
                 let mut other_statements: Vec<String> = 
-                statements
+                if_body
                     .iter()
                     .flat_map(|s| { Self::evaluate(s, used_variables) })
                     .collect();
@@ -66,13 +66,13 @@ impl Emitter {
 
                 output.push("}".to_string());
             }
-            Statement::While { comparisons, statements } => {
-                let expr = Self::convert_expr_to_string(comparisons.clone());
+            Statement::While { condition, while_body } => {
+                let expr = Self::convert_expr_to_string(condition.clone());
 
                 output.push("while ".to_owned() + &expr + " {");
 
                 let mut other_statements: Vec<String> = 
-                statements
+                while_body
                     .iter()
                     .flat_map(|s| { Self::evaluate(s, used_variables) })
                     .collect();
@@ -81,8 +81,8 @@ impl Emitter {
 
                 output.push("}".to_string());
             }
-            Statement::Input { string, identifier } => {
-                let text = Self::unwrap_value_token(string.clone());
+            Statement::Input { message, identifier } => {
+                let text = Self::unwrap_value_token(message.clone());
                 let variable = Self::unwrap_value_token(identifier.clone());
 
                 if !used_variables.contains_key(&variable) {

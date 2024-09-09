@@ -1,6 +1,6 @@
 use core::panic;
 use std::collections::HashMap;
-use crate::lexer::Token;
+use crate::lexer::{Lexer, Token};
 use crate::lexer::{
     BOOL_ID, 
     STRING_ID, 
@@ -11,10 +11,29 @@ use crate::lexer::{
 pub enum Statement {
     Print { value: Token },
     Let { identifier: Token, expression: Vec<Token> },
-    If { comparisons: Vec<Token>, statements: Vec<Statement> },
-    While { comparisons: Vec<Token>, statements: Vec<Statement> },
-    Input { string: Token, identifier: Token },
+    If { condition: Vec<Token>, if_body: Vec<Statement> },
+    While { condition: Vec<Token>, while_body: Vec<Statement> },
+    Input { message: Token, identifier: Token },
     Empty,
+}
+
+
+#[derive(PartialEq, Debug)]
+enum Operand {
+    Value { value: Token },
+    Operation { operation: Box<Operation> },
+}
+
+#[derive(PartialEq, Debug)]
+struct Operation {
+    operand_left: Option<Operand>,
+    operator: Option<Token>,
+    operand_right: Option<Operand>,
+}
+
+#[derive(PartialEq, Debug)]
+struct Condition {
+    operation: Operation,
 }
 
 #[derive(Debug)]
@@ -106,7 +125,10 @@ impl Parser {
                 self.comparisons();
                 self.match_token(Token::Then);
 
-                let comparisons = self.get_range_of_tokens(start, self.counter - 1);
+                let condition = self.get_range_of_tokens(start, self.counter - 1);
+
+                let condition_tree = Self::condition_tree(&condition);
+                dbg!(condition_tree);
 
                 self.match_token(Token::Newline);
 
@@ -118,7 +140,7 @@ impl Parser {
                 self.match_token(Token::Endif);
                 self.newline();
 
-                Statement::If { comparisons, statements }
+                Statement::If { condition, if_body: statements }
             },
             // "WHILE" comparisons nl "DO" nl {statement} nl "ENDWHILE" nl
             Some(Token::While) => {
@@ -129,7 +151,10 @@ impl Parser {
                 self.comparisons();
                 self.newline();
 
-                let comparisons = self.get_range_of_tokens(start, self.counter - 1);
+                let condition = self.get_range_of_tokens(start, self.counter - 1);
+
+                let condition_tree = Self::condition_tree(&condition);
+                dbg!(condition_tree);
 
                 self.match_token(Token::Do);
 
@@ -142,14 +167,14 @@ impl Parser {
                 self.match_token(Token::Endwhile);
                 self.newline();
 
-                Statement::While { comparisons, statements }
+                Statement::While { condition, while_body: statements }
             },
             // "INPUT" string identifier nl
             Some(Token::Input) => {
                 self.next_token();
 
                 self.match_token(Token::String(PLACEHOLDER, STRING_ID));
-                let string = self.previous.clone().unwrap();
+                let message = self.previous.clone().unwrap();
 
                 self.match_token(Token::Identifier(PLACEHOLDER, IDENTIFIER_ID));
                 let identifier = self.previous.clone().unwrap();
@@ -158,7 +183,7 @@ impl Parser {
 
                 self.newline();
 
-                Statement::Input { string, identifier }
+                Statement::Input { message, identifier }
             },
             // nl ::= '\n'+
             Some(Token::Newline) => {
@@ -175,6 +200,43 @@ impl Parser {
                 panic!("Syntax error: Token not recognized: {:#?}", self.current);
             }
         }
+    }
+
+    fn condition_tree(condition: &[Token]) -> Condition {
+        let operation = Self::operation_tree(condition);
+
+        Condition { operation }
+    }
+
+    fn operation_tree(condition: &[Token]) -> Operation {
+        let mut operation = Operation { 
+            operand_left: None,
+            operator: None,
+            operand_right: None,
+        };
+
+        for (index, token) in condition.iter().enumerate() {
+            if operation.operand_left.is_none() && Lexer::is_operand(token) {
+                operation.operand_left = Some(Operand::Value { value: token.clone() });
+            }
+            else if operation.operator.is_none() && Lexer::is_operator(token) {
+                operation.operator = Some(token.clone());
+            }
+            else if operation.operand_right.is_none() && Lexer::is_operand(token) && index + 1 == condition.len() {
+                operation.operand_right = Some(Operand::Value { value: token.clone() });
+            }
+            else if operation.operand_right.is_none() && Lexer::is_operator(token) {
+                // recursion here
+                operation.operand_right = 
+                    Some(Operand::Operation { operation:
+                        Box::new(Self::operation_tree(
+                            condition.get((index - 1)..condition.len())
+                            .unwrap()
+                        ))
+                    });
+            }
+        }
+        operation
     }
 
     fn check_identifier_from_string(&mut self, identifier: String) {

@@ -217,6 +217,33 @@ impl Lexer {
             Token::Identifier(value, _) => value,
         }
     }
+
+    pub fn is_operator(token: &Token) -> bool {
+        matches!(token, 
+            Token::And |
+            Token::Or |
+            Token::Equals |
+            Token::NotEquals |
+            Token::MoreThanEquals |
+            Token::MoreThan |
+            Token::LessThanEquals |
+            Token::LessThan |
+            Token::Plus |
+            Token::Minus |
+            Token::Times |
+            Token::Divide |
+            Token::Modulo
+        )
+    }
+
+    pub fn is_operand(token: &Token) -> bool {
+        matches!(token,
+            Token::Bool(_, _) |
+            Token::String(_, _) |
+            Token::Number(_, _) |
+            Token::Identifier(_, _)
+        )
+    }
 }
 
 
