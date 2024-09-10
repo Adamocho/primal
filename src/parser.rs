@@ -11,28 +11,28 @@ use crate::lexer::{
 pub enum Statement {
     Print { value: Token },
     Let { identifier: Token, expression: Vec<Token> },
-    If { condition: Vec<Token>, if_body: Vec<Statement> },
-    While { condition: Vec<Token>, while_body: Vec<Statement> },
+    If { condition_tree: Condition, if_body: Vec<Statement> },
+    While { condition_tree: Condition, while_body: Vec<Statement> },
     Input { message: Token, identifier: Token },
     Empty,
 }
 
 
 #[derive(PartialEq, Debug)]
-enum Operand {
+pub enum Operand {
     Value { value: Token },
     Operation { operation: Box<Operation> },
 }
 
 #[derive(PartialEq, Debug)]
-struct Operation {
+pub struct Operation {
     operand_left: Option<Operand>,
     operator: Option<Token>,
     operand_right: Option<Operand>,
 }
 
 #[derive(PartialEq, Debug)]
-struct Condition {
+pub struct Condition {
     operation: Operation,
 }
 
@@ -125,10 +125,10 @@ impl Parser {
                 self.comparisons();
                 self.match_token(Token::Then);
 
-                let condition = self.get_range_of_tokens(start, self.counter - 1);
+                let condition_range = self.get_range_of_tokens(start, self.counter - 1);
+                let condition_tree = Self::condition_tree(&condition_range);
 
-                let condition_tree = Self::condition_tree(&condition);
-                dbg!(condition_tree);
+                dbg!(&condition_tree);
 
                 self.match_token(Token::Newline);
 
@@ -140,7 +140,7 @@ impl Parser {
                 self.match_token(Token::Endif);
                 self.newline();
 
-                Statement::If { condition, if_body: statements }
+                Statement::If { condition_tree, if_body: statements }
             },
             // "WHILE" comparisons nl "DO" nl {statement} nl "ENDWHILE" nl
             Some(Token::While) => {
@@ -151,10 +151,10 @@ impl Parser {
                 self.comparisons();
                 self.newline();
 
-                let condition = self.get_range_of_tokens(start, self.counter - 1);
+                let condition_range = self.get_range_of_tokens(start, self.counter - 1);
+                let condition_tree = Self::condition_tree(&condition_range);
 
-                let condition_tree = Self::condition_tree(&condition);
-                dbg!(condition_tree);
+                dbg!(&condition_tree);
 
                 self.match_token(Token::Do);
 
@@ -167,7 +167,7 @@ impl Parser {
                 self.match_token(Token::Endwhile);
                 self.newline();
 
-                Statement::While { condition, while_body: statements }
+                Statement::While { condition_tree, while_body: statements }
             },
             // "INPUT" string identifier nl
             Some(Token::Input) => {
@@ -459,3 +459,35 @@ impl Parser {
     }
 }
 
+impl Condition {
+    pub fn get_tokens_from(&self) -> Vec<Token> {
+        Condition::get_tokens_from_operation(&self.operation)
+    }
+
+    fn get_tokens_from_operation(o: &Operation) -> Vec<Token> {
+        let mut tokens = vec![];
+        
+        // left
+        if let Some(Operand::Value { value }) = &o.operand_left {
+            tokens.push(value.clone());
+        }
+        if let Some(Operand::Operation { operation }) = &o.operand_left {
+            tokens.append(&mut Condition::get_tokens_from_operation(operation));
+        }
+
+        // middle
+        if let Some(operator) = &o.operator {
+            tokens.push(operator.clone());
+        }
+
+        // right
+        if let Some(Operand::Value { value }) = &o.operand_right {
+            tokens.push(value.clone());
+        }
+        if let Some(Operand::Operation { operation }) = &o.operand_right{
+            tokens.append(&mut Condition::get_tokens_from_operation(operation));
+        }
+
+        tokens
+    }
+}

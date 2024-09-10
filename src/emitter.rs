@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::lexer::{Lexer, Token};
-use crate::parser::Statement;
+use crate::parser::{Statement, Condition};
 
 #[derive(Debug)]
 pub struct Emitter {
@@ -51,8 +51,8 @@ impl Emitter {
                     used_variables.insert(variable, 0);
                 }
             }
-            Statement::If { condition, if_body } => {
-                let expr = Self::convert_expr_to_string(condition.clone());
+            Statement::If { condition_tree, if_body } => {
+                let expr = Self::convert_condition_to_string(condition_tree);
 
                 output.push("if ".to_owned() + &expr + " {");
 
@@ -66,8 +66,8 @@ impl Emitter {
 
                 output.push("}".to_string());
             }
-            Statement::While { condition, while_body } => {
-                let expr = Self::convert_expr_to_string(condition.clone());
+            Statement::While { condition_tree, while_body } => {
+                let expr = Self::convert_condition_to_string(condition_tree);
 
                 output.push("while ".to_owned() + &expr + " {");
 
@@ -96,7 +96,12 @@ impl Emitter {
         }
         output
     }
+    
+    fn convert_condition_to_string(condition: &Condition) -> String {
+        let tokens = condition.get_tokens_from();
 
+        Self::convert_expr_to_string(tokens)
+    }
 
     fn convert_expr_to_string(expression: Vec<Token>) -> String {
         let mut combined = String::new();                
