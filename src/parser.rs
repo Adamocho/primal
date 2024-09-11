@@ -10,7 +10,7 @@ use crate::lexer::{
 #[derive(Debug)]
 pub enum Statement {
     Print { value: Token },
-    Let { identifier: Token, expression: Vec<Token> },
+    Let { identifier: Token, expression_tree: Expression },
     If { condition_tree: Condition, if_body: Vec<Statement> },
     While { condition_tree: Condition, while_body: Vec<Statement> },
     Input { message: Token, identifier: Token },
@@ -34,6 +34,19 @@ pub struct Operation {
 #[derive(PartialEq, Debug)]
 pub struct Condition {
     operation: Operation,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum Term {
+    Value { sign: Option<Token>, value: Token},
+    Operation { operation: Box<Expression> },
+}
+
+#[derive(PartialEq, Debug)]
+pub struct Expression {
+    left: Option<Term>,
+    numeric_operator: Option<Token>,
+    right: Option<Term>,
 }
 
 #[derive(Debug)]
@@ -111,10 +124,11 @@ impl Parser {
                     self.expression();
                     expression = self.get_range_of_tokens(start, self.counter);
                 }
+                let expression_tree = Self::expression_tree(&expression);
 
                 self.newline();
                 
-                Statement::Let { identifier, expression }
+                Statement::Let { identifier, expression_tree }
             },
             // "IF" comparisons "THEN" nl {statement} nl "ENDIF" nl
             Some(Token::If) => {
@@ -127,8 +141,6 @@ impl Parser {
 
                 let condition_range = self.get_range_of_tokens(start, self.counter - 1);
                 let condition_tree = Self::condition_tree(&condition_range);
-
-                dbg!(&condition_tree);
 
                 self.match_token(Token::Newline);
 
@@ -153,8 +165,6 @@ impl Parser {
 
                 let condition_range = self.get_range_of_tokens(start, self.counter - 1);
                 let condition_tree = Self::condition_tree(&condition_range);
-
-                dbg!(&condition_tree);
 
                 self.match_token(Token::Do);
 
@@ -237,6 +247,54 @@ impl Parser {
             }
         }
         operation
+    }
+
+    fn expression_tree(expression: &[Token]) -> Expression {
+        let mut expression_tree = Expression {
+            left: None,
+            numeric_operator: None,
+            right: None,
+        };
+
+        let mut signed_token = None;
+
+        for (index, token) in expression.iter().enumerate() {
+            // left
+            if expression_tree.left.is_none() && Lexer::is_sign(token) {
+                signed_token = Some(token);
+            }
+            else if expression_tree.left.is_none() && Lexer::is_operand(token) {
+                expression_tree.left = Some(Term::Value { sign: signed_token.cloned(), value: token.clone() });
+                if signed_token.is_some() {
+                    signed_token = None;
+                    continue;
+                }
+            }
+            // middle
+            else if expression_tree.numeric_operator.is_none() && Lexer::is_numeric_operator(token) {
+                expression_tree.numeric_operator = Some(token.clone());
+            }
+            //right
+            else if expression_tree.right.is_none() && Lexer::is_sign(token) {
+                signed_token = Some(token);
+            }
+            else if expression_tree.right.is_none() && Lexer::is_operand(token) {
+                if index == (expression.len() - 1) {
+                    expression_tree.right = Some(Term::Value { sign: signed_token.cloned(), value: token.clone() });
+                    continue;
+                }
+                // recursion here
+                expression_tree.right =
+                    Some(Term::Operation { operation:
+                        Box::new(Self::expression_tree(
+                            expression.get((index - 1)..expression.len())
+                            .unwrap()
+                        ))
+                    });
+            } 
+        }
+
+        expression_tree
     }
 
     fn check_identifier_from_string(&mut self, identifier: String) {
@@ -328,7 +386,7 @@ impl Parser {
     fn expression(&mut self) {
         self.term();
 
-         while self.current == Some(Token::Plus) || self.current == Some(Token::Minus) {
+        while self.current == Some(Token::Plus) || self.current == Some(Token::Minus) {
             self.next_token();
 
             self.term();
@@ -339,7 +397,7 @@ impl Parser {
     fn term(&mut self) {
         self.unary();
 
-         while self.current == Some(Token::Times)
+        while self.current == Some(Token::Times)
         || self.current == Some(Token::Divide)
         || self.current == Some(Token::Modulo) {
             self.next_token();
@@ -491,3 +549,39 @@ impl Condition {
         tokens
     }
 }
+
+impl Expression {
+    pub fn get_tokens_from(&self) -> Vec<Token> {
+        let mut tokens = vec![];
+        
+        // left
+        if let Some(Term::Value { sign, value }) = &self.left {
+            if sign.is_some() {
+                tokens.push(sign.clone().unwrap());
+            }
+            tokens.push(value.clone());
+        }
+        if let Some(Term::Operation { operation }) = &self.left {
+            tokens.append(&mut Expression::get_tokens_from(operation));
+        }
+
+        //middle
+        if let Some(operator) = &self.numeric_operator {
+            tokens.push(operator.clone());
+        }
+
+        // right
+        if let Some(Term::Value { sign, value }) = &self.right {
+            if sign.is_some() {
+                tokens.push(sign.clone().unwrap());
+            }
+            tokens.push(value.clone());
+        }
+        if let Some(Term::Operation { operation }) = &self.right {
+            tokens.append(&mut Expression::get_tokens_from(operation));
+        }
+
+        tokens
+    }
+}
+
