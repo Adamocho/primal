@@ -236,12 +236,29 @@ impl Lexer {
         )
     }
 
+    pub fn is_numeric_operator(token: &Token) -> bool {
+        matches!(token,
+            Token::Plus |
+            Token::Minus |
+            Token::Times |
+            Token::Divide |
+            Token::Modulo
+        )
+    }
+
     pub fn is_operand(token: &Token) -> bool {
         matches!(token,
             Token::Bool(_, _) |
             Token::String(_, _) |
             Token::Number(_, _) |
             Token::Identifier(_, _)
+        )
+    }
+
+    pub fn is_sign(token: &Token) -> bool {
+        matches!(token,
+            Token::Plus |
+            Token::Minus
         )
     }
 }
