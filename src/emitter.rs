@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::lexer::{Lexer, Token};
-use crate::parser::{Statement, Condition};
+use crate::parser::{Condition, Expression, Statement};
 
 #[derive(Debug)]
 pub struct Emitter {
@@ -40,9 +40,9 @@ impl Emitter {
 
                 output.push("println!(\"{}\", ".to_owned() + &variable_value + " );");
             }
-            Statement::Let { identifier, expression } => {
+            Statement::Let { identifier, expression_tree } => {
                 let variable = Self::unwrap_value_token(identifier.clone());
-                let expr = Self::convert_expr_to_string(expression.clone());
+                let expr = Self::convert_expression_to_string(expression_tree);
 
                 if used_variables.get(&variable).is_some() {
                     output.push(variable + " = " + &expr + ";");
@@ -103,11 +103,14 @@ impl Emitter {
         Self::convert_expr_to_string(tokens)
     }
 
-    fn convert_expr_to_string(expression: Vec<Token>) -> String {
-        let mut combined = String::new();                
-        expression.iter().for_each(|token| { combined += &(Lexer::convert_token_to_string(token.clone()) + " ")});
+    fn convert_expression_to_string(expression: &Expression) -> String {
+        let tokens = expression.get_tokens_from();
 
-        combined
+        Self::convert_expr_to_string(tokens)
+    }
+
+    fn convert_expr_to_string(expression: Vec<Token>) -> String {
+        expression.iter().map(|token| Lexer::convert_token_to_string(token.clone())).collect::<Vec<String>>().join(" ")
     }
 
     fn unwrap_value_token(token: Token) -> String {
