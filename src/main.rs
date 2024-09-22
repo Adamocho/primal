@@ -1,5 +1,5 @@
 use std::{env, fs};
-use primal::{emitter, lexer, parser};
+use primal::{emitter, lexer, parser, optimiser};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -12,10 +12,15 @@ fn main() {
     let tokens = lexer::Lexer::tokenize(file_contents);
 
     let mut parser = parser::Parser::new(tokens);
-    let parsed = parser.parse();
+    // an Abstract Syntax Tree
+    let ast = parser.parse();
 
-    let mut emitter = emitter::Emitter::new(parsed);
+    // let mut optimiser = optimiser::Optimiser::new();
+    // let ast = optimiser.optimise(ast);
+
+    let mut emitter = emitter::Emitter::new(ast);
     let lines = emitter.emit();
 
     fs::write("./primal-runner/src/main.rs", lines.join("\n")).expect("Writing lines to output rust file");
 }
+
