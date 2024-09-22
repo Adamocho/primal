@@ -83,8 +83,3 @@ Comments apply till the end of the line
 PRINT "Hi mom!" # This is a comment LET x = 1 - it doesn't work here
 ```
 
-### Status
-
-MVP (Minimum Viable Product) state reached.
-Now is the time for some upgrades!
-

@@ -1,5 +1,12 @@
 use crate::parser::Statement;
 
+    // FOR LATER
+    //
+    // analyze key points:
+    // - follow identifiers (check types; if static, save as a number)
+    // - if/while statements check for easier solutions, e.g. while x == true OR x > 1
+    // - cache computed results
+    // READ the wiki page about optimizing compiler
 
 pub struct Optimiser {
 }

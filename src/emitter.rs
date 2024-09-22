@@ -132,18 +132,5 @@ impl Emitter {
         
         panic!("Compile error: wrong value for token");
     }
-
-    // FOR LATER
-    //
-    // analyze key points:
-    // - follow identifiers (check types; if static, save as a number)
-    // - if/while statements check for easier solutions, e.g. while x == true OR x > 1
-    // - cache computed results
-    // READ the wiki page about optimizing compiler
-    // analysis
-    pub fn analyze(&mut self) {}
-    // optimization passes
-    pub fn optimize(&mut self) {}
-    // run file
-    pub fn execute_code(&mut self) {}
 }
+
