@@ -30,7 +30,7 @@ pub enum Token {
     Divide,
     Modulo,
 
-    // u8 is and ID for simpler matching
+    // u8 is an ID for simpler matching
     Bool(bool, u8),
     String(String, u8),
     Number(i32, u8),
@@ -58,8 +58,14 @@ impl Lexer {
             .collect()
     }
 
-    fn tokenize_line(line: &str) -> Vec<Token> {
+    fn return_good_token(option_slice: Option<&str>) -> Vec<&str> {
+        if let Some(unit) = option_slice { 
+            return vec![unit];
+        }
+        vec![]
+    }
 
+    fn tokenize_line(line: &str) -> Vec<Token> {
         let mut lexemes: Vec<&str> = vec![];
         let mut lexeme_start = 0;
         let mut is_lexeme = false;
@@ -67,19 +73,16 @@ impl Lexer {
         let mut is_string = false;
 
         line.chars().enumerate().for_each(|(index, c)| {
-
-            // ignore the rest of the line
             if is_comment { return; }
 
             match c {
-                ' ' | '\n' => {
-                    if is_lexeme && !is_string {
-                        if let Some(unit) = line.get(lexeme_start..=index - 1) { 
-                            lexemes.push(unit);
-                        }
-                        is_lexeme = false;
-                    }
-                },
+                ' ' | '\n' if is_lexeme && !is_string => {
+                    let mut token_vector = Self::return_good_token(line.get(lexeme_start..=index - 1));
+                    lexemes.append(&mut token_vector);
+                    
+                    is_lexeme = false;
+                }, 
+                ' ' | '\n' => {}, // catch the rest of whitespace
                 '#' => {
                     is_comment = true;
                 },
@@ -94,9 +97,9 @@ impl Lexer {
                     }
 
                     if is_lexeme && index == line.len() - 1{
-                        if let Some(unit) = line.get(lexeme_start..=index) { 
-                            lexemes.push(unit);
-                        }
+                        let mut token_vector = Self::return_good_token(line.get(lexeme_start..=index));
+                        lexemes.append(&mut token_vector);
+
                         is_lexeme = false;
                     }
                 }
