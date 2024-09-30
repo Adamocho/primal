@@ -226,16 +226,24 @@ impl Parser {
         };
 
         for (index, token) in condition.iter().enumerate() {
-            if operation.operand_left.is_none() && Lexer::is_operand(token) {
+            let is_operand_and_left_is_empty = operation.operand_left.is_none() && Lexer::is_operand(token);
+            let is_operator_and_middle_is_empty = operation.operator.is_none() && Lexer::is_operator(token);
+            let is_operand_and_right_is_empty_and_is_last_token = operation.operand_right.is_none() && Lexer::is_operand(token) && index + 1 == condition.len();
+            let is_operator_and_right_is_empty = operation.operand_right.is_none() && Lexer::is_operator(token);
+
+            if is_operand_and_left_is_empty {
                 operation.operand_left = Some(Operand::Value { value: token.clone() });
+                continue;
             }
-            else if operation.operator.is_none() && Lexer::is_operator(token) {
+            if is_operator_and_middle_is_empty {
                 operation.operator = Some(token.clone());
+                continue;
             }
-            else if operation.operand_right.is_none() && Lexer::is_operand(token) && index + 1 == condition.len() {
+            if is_operand_and_right_is_empty_and_is_last_token {
                 operation.operand_right = Some(Operand::Value { value: token.clone() });
+                continue;
             }
-            else if operation.operand_right.is_none() && Lexer::is_operator(token) {
+            if is_operator_and_right_is_empty {
                 // recursion here
                 operation.operand_right = 
                     Some(Operand::Operation { operation:
@@ -259,39 +267,48 @@ impl Parser {
         let mut signed_token = None;
 
         for (index, token) in expression.iter().enumerate() {
+            let is_sign_and_left_is_empty = expression_tree.left.is_none() && Lexer::is_sign(token);
+            let is_operand_and_left_is_empty = expression_tree.left.is_none() && Lexer::is_operand(token);
+            let is_numeric_and_numeric_field_is_empty = expression_tree.numeric_operator.is_none() && Lexer::is_numeric_operator(token);
+            let is_sign_and_right_is_empty = expression_tree.right.is_none() && Lexer::is_sign(token);
+            let is_operand_and_right_is_empty = expression_tree.right.is_none() && Lexer::is_operand(token);
+            let is_last_token = index == (expression.len() - 1);
+
             // left
-            if expression_tree.left.is_none() && Lexer::is_sign(token) {
+            if is_sign_and_left_is_empty {
                 signed_token = Some(token);
+                continue;
             }
-            else if expression_tree.left.is_none() && Lexer::is_operand(token) {
+            if is_operand_and_left_is_empty {
                 expression_tree.left = Some(Term::Value { sign: signed_token.cloned(), value: token.clone() });
-                if signed_token.is_some() {
-                    signed_token = None;
-                    continue;
-                }
+                signed_token = None;
+                continue;
             }
+
             // middle
-            else if expression_tree.numeric_operator.is_none() && Lexer::is_numeric_operator(token) {
+            if is_numeric_and_numeric_field_is_empty {
                 expression_tree.numeric_operator = Some(token.clone());
+                continue;
             }
+
             //right
-            else if expression_tree.right.is_none() && Lexer::is_sign(token) {
+            if is_sign_and_right_is_empty {
                 signed_token = Some(token);
+                continue;
             }
-            else if expression_tree.right.is_none() && Lexer::is_operand(token) {
-                if index == (expression.len() - 1) {
-                    expression_tree.right = Some(Term::Value { sign: signed_token.cloned(), value: token.clone() });
-                    continue;
-                }
-                // recursion here
-                expression_tree.right =
-                    Some(Term::Operation { operation:
-                        Box::new(Self::expression_tree(
-                            expression.get((index - 1)..expression.len())
-                            .unwrap()
-                        ))
-                    });
-            } 
+            if is_operand_and_right_is_empty && is_last_token {
+                expression_tree.right = Some(Term::Value { sign: signed_token.cloned(), value: token.clone() });
+                signed_token = None;
+                continue;
+            }
+            // recursion here
+            expression_tree.right =
+                Some(Term::Operation { operation:
+                    Box::new(Self::expression_tree(
+                        expression.get((index - 1)..expression.len())
+                        .unwrap()
+                    ))
+                });
         }
 
         expression_tree
@@ -351,21 +368,18 @@ impl Parser {
     // value ::= identifier | string | number | bool
     fn value(&mut self) {
         match &self.current {
-            Some(Token::Identifier(identifier, id)) => {
-                if *id == IDENTIFIER_ID {
-                    self.check_identifier_from_string(identifier.to_string());
-                    self.next_token(); return;
-                }
+            Some(Token::Identifier(identifier, id)) if *id == IDENTIFIER_ID => {
+                self.check_identifier_from_string(identifier.to_string());
+                self.next_token(); return;
             },
             Some(Token::String(_, id))
             | Some(Token::Number(_, id))
-            | Some(Token::Bool(_, id)) => {
-                if *id == IDENTIFIER_ID
+            | Some(Token::Bool(_, id)) if 
+                *id == IDENTIFIER_ID
                 || *id == STRING_ID
                 || *id == NUMBER_ID
-                || *id == BOOL_ID { 
+                || *id == BOOL_ID => { 
                     self.next_token(); return;
-                }
             },
             _ => {}
         }
@@ -417,18 +431,23 @@ impl Parser {
 
     // primary ::= identifier | number
     fn primary(&mut self) {
+        let mut is_matching = false;
+
         match &self.current {
-            Some(Token::Identifier(identifier, id)) => {
-                if *id == IDENTIFIER_ID { 
-                    self.check_identifier_from_string(identifier.to_string());
-                    self.next_token();
-                    return;
-                }
+            Some(Token::Identifier(identifier, id)) if *id == IDENTIFIER_ID => {
+                self.check_identifier_from_string(identifier.to_string());
+                self.next_token();
+                is_matching = true;
             },
-            Some(Token::Number(_, id)) => {
-                if *id == NUMBER_ID { self.next_token(); return; }
+            Some(Token::Number(_, id)) if *id == NUMBER_ID => {
+                self.next_token();
+                is_matching = true;
             },
             _ => {}
+        }
+
+        if is_matching {
+            return;
         }
 
         Self::abort(
@@ -483,11 +502,10 @@ impl Parser {
                 self.match_value_token(expected, id);
             }
 
-            _ => {
-                if Some(&expected) != self.current.as_ref() {
+            _ if Some(&expected) != self.current.as_ref() => {
                     Self::abort(format!("expected {:#?}, got {:#?}", expected, self.current));
-                }
             }
+            _ => {}
         }
         self.next_token();
     }
@@ -497,8 +515,9 @@ impl Parser {
     fn match_value_token(&mut self, expected: Token, id: u8) {
         match self.current {
             Some(Token::Bool(_, current_id)) | Some(Token::String(_, current_id)) |
-            Some(Token::Number(_, current_id)) | Some(Token::Identifier(_, current_id)) => {
-                if id == current_id { return; }
+            Some(Token::Number(_, current_id)) | Some(Token::Identifier(_, current_id))
+            if id == current_id => {
+                return;
             }
             _ => {}
         }
