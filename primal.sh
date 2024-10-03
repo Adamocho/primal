@@ -2,6 +2,10 @@
 
 function compile_and_run {
     cargo run --quiet -- "$1"
+    if [ $? -ne 0 ]; then
+        echo "Fix the source code first!" && return 1;
+    fi
+
     command pushd ./primal-runner > /dev/null
     cargo run --quiet
     command popd > /dev/null
