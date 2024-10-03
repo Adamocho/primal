@@ -1,5 +1,3 @@
-use core::panic;
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Print,
@@ -23,6 +21,7 @@ pub enum Token {
     LessThan,
     And,
     Or,
+    Not,
 
     Plus,
     Minus,
@@ -156,6 +155,7 @@ impl Lexer {
             "ENDWHILE" => Token::Endwhile,
             "AND" => Token::And,
             "OR" => Token::Or,
+            "NOT" => Token::Not,
 
             "=" => Token::Assign,
 
@@ -199,8 +199,9 @@ impl Lexer {
             Token::End => "END".to_string(),
             Token::Endif => "ENDIF".to_string(),
             Token::Endwhile => "ENDWHILE".to_string(),
-            Token::And => "AND".to_string(),
-            Token::Or => "OR".to_string(),
+            Token::And => "&&".to_string(),
+            Token::Or => "||".to_string(),
+            Token::Not => "!".to_string(),
             Token::Assign => "=".to_string(),
             Token::Equals =>"==".to_string(),
             Token::NotEquals =>"!=".to_string(),
@@ -236,6 +237,38 @@ impl Lexer {
             Token::Times |
             Token::Divide |
             Token::Modulo
+        )
+    }
+
+
+    pub fn is_some_equality_operator(token: Option<&Token>) -> bool {
+        if let Some(token) = token {
+            return Self::is_equality_operator(token);
+        }
+        false
+    }
+
+    pub fn is_equality_operator(token: &Token) -> bool {
+        matches!(token, 
+            Token::Equals |
+            Token::NotEquals |
+            Token::MoreThanEquals |
+            Token::MoreThan |
+            Token::LessThanEquals |
+            Token::LessThan
+        )
+    }
+
+    pub fn is_some_logic_condition_operator(token: Option<&Token>) -> bool {
+        if let Some(token) = token {
+            return Self::is_logic_condition_operator(token);
+        }
+        false
+    }
+
+    pub fn is_logic_condition_operator(token: &Token) -> bool {
+        matches!(token, 
+            Token::And | Token::Or
         )
     }
 

@@ -1,4 +1,3 @@
-use core::panic;
 use std::collections::HashMap;
 use crate::lexer::{Lexer, Token};
 use crate::lexer::{
@@ -20,7 +19,7 @@ pub enum Statement {
 
 #[derive(PartialEq, Debug)]
 pub enum Operand {
-    Value { value: Token },
+    Value { negation: bool, value: Token },
     Operation { operation: Box<Operation> },
 }
 
@@ -38,7 +37,7 @@ pub struct Condition {
 
 #[derive(PartialEq, Debug)]
 pub enum Term {
-    Value { sign: Option<Token>, value: Token},
+    Value { sign: Option<Token>, value: Token },
     Operation { operation: Box<Expression> },
 }
 
@@ -60,6 +59,7 @@ pub struct Parser {
 }
 
 const PLACEHOLDER: String = String::new();
+const BOOL_PLACEHOLDER: bool = false;
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Parser {
@@ -224,6 +224,7 @@ impl Parser {
             operator: None,
             operand_right: None,
         };
+        let mut is_negation = false;
 
         for (index, token) in condition.iter().enumerate() {
             let is_operand_and_left_is_empty = operation.operand_left.is_none() && Lexer::is_operand(token);
@@ -231,19 +232,23 @@ impl Parser {
             let is_operand_and_right_is_empty_and_is_last_token = operation.operand_right.is_none() && Lexer::is_operand(token) && index + 1 == condition.len();
             let is_operator_and_right_is_empty = operation.operand_right.is_none() && Lexer::is_operator(token);
 
+            if *token == Token::Not {
+                is_negation = true;   
+            }
             if is_operand_and_left_is_empty {
-                operation.operand_left = Some(Operand::Value { value: token.clone() });
-                continue;
+                operation.operand_left = Some(Operand::Value { negation: is_negation, value: token.clone() });
+                is_negation = false;
+                continue; 
             }
             if is_operator_and_middle_is_empty {
                 operation.operator = Some(token.clone());
-                continue;
             }
             if is_operand_and_right_is_empty_and_is_last_token {
-                operation.operand_right = Some(Operand::Value { value: token.clone() });
+                operation.operand_right = Some(Operand::Value { negation: is_negation, value: token.clone() });
+                is_negation = false;
                 continue;
             }
-            if is_operator_and_right_is_empty {
+            else if operation.operand_right.is_none() && Lexer::is_operator(token) {
                 // recursion here
                 operation.operand_right = 
                     Some(Operand::Operation { operation:
@@ -347,22 +352,42 @@ impl Parser {
 
     // comparison ::= (expression equals expression) | ("true" | "false")
     fn comparison(&mut self) {
-        self.comparison_branch();
-        
+        let is_expression_bool_construction =  self.comparison_branch();
+        let is_last_token = self.current == Some(Token::Then);
+        let is_logic_operator = Lexer::is_some_logic_condition_operator(self.current.as_ref());
+
+        let is_fast_forward = {
+            is_expression_bool_construction &&
+            (is_last_token || is_logic_operator)
+        };
+
+        if is_fast_forward {
+            return;
+        }
+
         self.equals();
 
         self.comparison_branch();
     }
 
-    fn comparison_branch(&mut self) {
+    fn comparison_branch(&mut self) -> bool {
         match &self.current {
             Some(Token::Identifier(variable, IDENTIFIER_ID)) => {
                 self.check_identifier_from_string(variable.to_string());
                 self.expression();
             }
-            Some(Token::Bool(_, BOOL_ID)) => self.next_token(),
+            Some(Token::Bool(_, BOOL_ID)) => {
+                self.next_token();
+                return true;
+            },
+            Some(Token::Not) => {
+                self.next_token();
+                self.boolean();
+                return true;
+            },
             _ => self.next_token(),
         }
+        false
     }
 
     // value ::= identifier | string | number | bool
@@ -460,12 +485,35 @@ impl Parser {
         );
     }
 
+    // boolean ::= identifier | bool
+    fn boolean(&mut self) {
+        match &self.current {
+            Some(Token::Identifier(identifier, id)) if *id == IDENTIFIER_ID => {
+                self.check_identifier_from_string(identifier.to_string());
+                self.next_token();
+                return;
+            },
+            Some(Token::Bool(_, id)) if *id == BOOL_ID => {
+                self.next_token();
+                return;
+            },
+            _ => {}
+        }
+
+        Self::abort(
+            format!(
+                "expected {:#?} OR {:#?}, got {:#?}",
+                Token::Identifier(PLACEHOLDER, IDENTIFIER_ID),
+                Token::Bool(BOOL_PLACEHOLDER, BOOL_ID),
+                self.current
+            )
+        );
+    }
+
     // equals ::= ("==" | "!=" | "<=" | ">=" | ">" | "<")
     fn equals(&mut self) {
-        match self.current {
-            Some(Token::Equals) | Some(Token::NotEquals) |
-            Some(Token::MoreThan) | Some(Token::MoreThanEquals) |
-            Some(Token::LessThan) | Some(Token::LessThanEquals) => {
+        match &self.current {
+            Some(token) if Lexer::is_equality_operator(token) => {
                 self.next_token();
             }
             _ => {
@@ -545,7 +593,8 @@ impl Condition {
         let mut tokens = vec![];
         
         // left
-        if let Some(Operand::Value { value }) = &o.operand_left {
+        if let Some(Operand::Value { negation, value }) = &o.operand_left {
+            tokens.append(&mut Condition::get_tokens_from_negation(*negation));
             tokens.push(value.clone());
         }
         if let Some(Operand::Operation { operation }) = &o.operand_left {
@@ -558,7 +607,8 @@ impl Condition {
         }
 
         // right
-        if let Some(Operand::Value { value }) = &o.operand_right {
+        if let Some(Operand::Value { negation, value }) = &o.operand_right {
+            tokens.append(&mut Condition::get_tokens_from_negation(*negation));
             tokens.push(value.clone());
         }
         if let Some(Operand::Operation { operation }) = &o.operand_right{
@@ -566,6 +616,13 @@ impl Condition {
         }
 
         tokens
+    }
+
+    fn get_tokens_from_negation(is_negation: bool) -> Vec<Token> {
+        if is_negation {
+            return vec![Token::Not];
+        }
+        vec![]
     }
 }
 
