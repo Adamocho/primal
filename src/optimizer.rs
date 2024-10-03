@@ -8,19 +8,19 @@ use crate::parser::Statement;
     // - cache computed results
     // READ the wiki page about optimizing compiler
 
-pub struct Optimiser {
+pub struct Optimizer {
 }
 
-impl Optimiser {
+impl Optimizer {
     pub fn new() -> Self {
     // hack into NASA
     // download the secret optimisation code
     // run it all at the same time no questions asked
     // spit it out
-        Optimiser {}
+        Optimizer {}
     }
 
-    pub fn optimise(&mut self, ast: Vec<Statement>) -> Vec<Statement> {
+    pub fn optimize(&mut self, ast: Vec<Statement>) -> Vec<Statement> {
         ast
     }
 }

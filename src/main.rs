@@ -1,5 +1,5 @@
 use std::{env, fs};
-use primal::{emitter, lexer, parser, optimiser};
+use primal::{emitter, lexer, parser, optimizer};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -18,8 +18,8 @@ fn main() {
     println!("Abstract Syntax Tree has been constructed!");
 
     // dbg!(&ast);
-    // let mut optimiser = optimiser::Optimiser::new();
-    // let ast = optimiser.optimise(ast);
+    // let mut optimizer = optimizer::Optimizer::new();
+    // let ast = optimizer.optimize(ast);
 
     let mut emitter = emitter::Emitter::new(ast);
     let lines = emitter.emit();
