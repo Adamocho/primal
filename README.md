@@ -76,8 +76,8 @@ Including:
 
 ### Comments
 
-Commenting is done with the hash `#` sign. The compiler should throw it away.
-Comments apply till the end of the line
+Commenting is done with the hash `#` sign.
+Comments apply till the end of the line.
 
 ```
 PRINT "Hi mom!" # This is a comment LET x = 1 - it doesn't work here
